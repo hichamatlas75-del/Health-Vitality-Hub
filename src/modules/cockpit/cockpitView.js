@@ -205,8 +205,8 @@ export class CockpitView {
                 <span class="stream-protocol">Protocole 18:6 (15h00 - 09h00)</span>
               </div>
             </div>
-            <span class="phase-tag ${fastMaster.phase === 'fasting' ? 'tag-fasting' : 'tag-eating'}">
-              ${fastMaster.phase === 'fasting' ? 'Jeûne Actif' : 'Fenêtre Repas'}
+            <span class="phase-tag ${fastMaster.phase === 'fasting' ? 'tag-done' : 'tag-eating'}">
+              ${fastMaster.phase === 'fasting' ? 'Chrono Actif (Accompli ✓)' : 'Fenêtre Repas'}
             </span>
           </div>
 

@@ -219,16 +219,17 @@ export class HealthAggregator {
     const { fastingStatus, todayMeals, todayNetCarbs, todayProtein, targetCarbs, targetProtein, todayWorkouts } = data;
 
     // --- OBJECTIF 1 : JEÛNE 18/6 ---
-    let fastingAccomplished = false;
+    // Dès le début du chrono de jeûne (15h00), la case est immédiatement marquée ACCOMPLI ✓
+    let fastingAccomplished = true;
     let fastingStatusText = '';
     let fastingProgress = fastingStatus.progressPercent;
 
     if (fastingStatus.phase === 'fasting') {
       fastingStatusText = `Jeûne 18h actif (${fastingStatus.elapsedFormatted} écoulées)`;
-      fastingAccomplished = fastingStatus.progressPercent >= 50; // En bonne voie
+      fastingAccomplished = true; // Dès le début du chrono de jeûne, marqué accompli
     } else {
-      // En fenêtre repas (09h - 15h) : respecté si aucun repas n'a été pris avant 09h
-      fastingStatusText = `Fenêtre repas respectée (prochain jeûne à 15h00)`;
+      // En fenêtre repas (09h - 15h)
+      fastingStatusText = `Fenêtre repas (prochain jeûne à 15h00)`;
       fastingAccomplished = true;
     }
 
@@ -236,15 +237,15 @@ export class HealthAggregator {
       id: 'fasting',
       title: 'Jeûne Intermittent 18/6 (15h00 - 09h00)',
       target: '18h de jeûne quotidien',
-      current: fastingStatus.phase === 'fasting' ? `${fastingStatus.elapsedFormatted} de jeûne` : 'Fenêtre 09h-15h',
+      current: fastingStatus.phase === 'fasting' ? `Chrono actif : ${fastingStatus.elapsedFormatted} de jeûne` : 'Fenêtre 09h-15h',
       percent: fastingProgress,
       isAccomplished: fastingAccomplished,
-      statusLabel: fastingAccomplished ? 'En cours / Respecté ✓' : 'Non démarré',
-      tagClass: fastingAccomplished ? 'badge-success' : 'badge-pending',
+      statusLabel: 'Accompli ✓',
+      tagClass: 'badge-success',
       icon: '⚡',
       details: fastingStatus.phase === 'fasting'
-        ? `Étape : ${fastingStatus.currentStage.name} (${fastingStatus.currentStage.emoji}). Fin prévue à 09h00.`
-        : `Repas autorisés jusqu'à 15h00. Le jeûne de 18h démarrera automatiquement à 15h00.`
+        ? `Chrono de jeûne 18h démarré et validé ! Étape : ${fastingStatus.currentStage.name} (${fastingStatus.currentStage.emoji}). Fin prévue à 09h00.`
+        : `Fenêtre de repas active (09h00 - 15h00). Le chrono de 18h démarrera automatiquement à 15h00.`
     };
 
     // --- OBJECTIF 2 : NUTRITION & GLUCIDES ---
