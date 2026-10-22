@@ -19,10 +19,11 @@ const DEFAULT_STATE = {
     theme: 'dark'
   },
   fasting: {
-    isActive: false,
+    isActive: true,
     startTime: null,
-    targetHours: 16,
-    planKey: 'PLAN_16_8',
+    targetHours: 18,
+    planKey: 'PLAN_18_6',
+    autoSchedule: true,
     history: []
   },
   nutrition: {

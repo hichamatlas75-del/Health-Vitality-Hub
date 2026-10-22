@@ -1,10 +1,12 @@
 /**
  * Workout View Controller - Health & Vitality Hub
  * Interface utilisateur de la séance de sport à la maison & player guidé.
+ * Connecté directement au backend de l'application mère "Workout Home" (Firebase RTDB).
  */
 
 import { EXERCISES_DATA, ROUTINES_BY_LEVEL, getExercisesForLevel, getExerciseById } from './exerciseData.js';
 import { WorkoutEngine, WORKOUT_STATES } from './workoutEngine.js';
+import { workoutSync } from './workoutSyncService.js';
 import { appStore } from '../../core/store.js';
 import { ICONS } from '../../ui/icons.js';
 
@@ -36,6 +38,12 @@ export class WorkoutView {
 
   mount() {
     this.render();
+    // Synchro automatique en arrière-plan avec le backend Workout Home
+    workoutSync.sync().then(res => {
+      if (res && res.success) {
+        this.updateSyncBadge();
+      }
+    }).catch(() => {});
   }
 
   unmount() {
@@ -58,6 +66,7 @@ export class WorkoutView {
     const workoutState = appStore.state.workout;
     const routineExercises = getExercisesForLevel(this.selectedLevel);
     const estDurationMinutes = Math.round((routineExercises.length * 40 * this.selectedRounds) / 60);
+    const creds = workoutSync.getCredentials();
 
     this.container.innerHTML = `
       <div class="view-header">
@@ -66,6 +75,24 @@ export class WorkoutView {
           <h1 class="view-title">Sport & Vitalité</h1>
         </div>
         <div class="header-icon-badge">${ICONS.workout}</div>
+      </div>
+
+      <!-- BANNIÈRE BACKEND WORKOUT HOME (APPLICATION MÈRE) -->
+      <div class="workout-backend-card">
+        <div class="backend-card-header">
+          <div class="backend-title-wrap">
+            <span class="backend-icon">⚡</span>
+            <div>
+              <strong class="backend-title">Backend Workout Home (Firebase RTDB)</strong>
+              <span id="workoutSyncTimeLabel" class="backend-sub">
+                ${workoutSync.lastSyncTime ? `Dernière synchro : ${workoutSync.lastSyncTime}` : `Connecté : profil "${creds.userId}"`}
+              </span>
+            </div>
+          </div>
+          <button id="btnSyncWorkoutHome" class="btn-primary btn-sm">
+            🔄 Synchroniser
+          </button>
+        </div>
       </div>
 
       <!-- STATUT DU JOUR & SÉRIE -->
@@ -158,15 +185,15 @@ export class WorkoutView {
           <h2 class="section-title">Historique des Séances</h2>
           <div class="history-list">
             ${workoutState.history.slice(0, 5).map(session => {
-              const dateStr = new Date(session.timestamp).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-              const mins = Math.round(session.durationSeconds / 60);
+              const dateStr = new Date(session.timestamp || session.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+              const mins = Math.round((session.durationSeconds || 600) / 60);
               return `
                 <div class="history-row">
                   <div class="history-left">
                     <span class="history-emoji">🏆</span>
                     <div>
-                      <div class="history-plan-name">Circuit ${session.routineLevel} · ${session.rounds} tours</div>
-                      <div class="history-date">${dateStr} · ~${mins} min · ${session.caloriesBurned} kcal</div>
+                      <div class="history-plan-name">Circuit ${session.routineLevel || 'Général'} · ${session.rounds || 2} tours</div>
+                      <div class="history-date">${dateStr} · ~${mins} min · ${session.caloriesBurned || 120} kcal</div>
                     </div>
                   </div>
                   <span class="badge-success">Validé</span>
@@ -290,7 +317,7 @@ export class WorkoutView {
       <div class="workout-completed-screen">
         <div class="completed-icon-wrap">🎉</div>
         <h1 class="completed-title">Séance Terminée !</h1>
-        <p class="completed-sub">Félicitations pour votre régularité et votre engagement pour votre vitalité.</p>
+        <p class="completed-sub">Félicitations pour votre régularité. Les données ont été sauvegardées et envoyées au backend Workout Home.</p>
 
         <div class="completed-stats-grid">
           <div class="c-stat-box">
@@ -346,6 +373,25 @@ export class WorkoutView {
   }
 
   bindHomeEvents() {
+    // Bouton de synchronisation Workout Home
+    const btnSync = this.container.querySelector('#btnSyncWorkoutHome');
+    if (btnSync) {
+      btnSync.addEventListener('click', async () => {
+        btnSync.disabled = true;
+        btnSync.textContent = 'Synchronisation...';
+        const res = await workoutSync.sync();
+        btnSync.disabled = false;
+        btnSync.textContent = '🔄 Synchroniser';
+        if (res && res.success) {
+          this.updateSyncBadge();
+          alert("Séances de sport et profil synchronisés avec succès avec l'application mère Workout Home (Firebase RTDB) !");
+          this.render();
+        } else {
+          alert("Erreur de connexion Workout Home : " + (res?.error || 'inconnue'));
+        }
+      });
+    }
+
     // Changement de niveau
     this.container.querySelectorAll('.level-tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -439,6 +485,13 @@ export class WorkoutView {
       const circumference = 2 * Math.PI * radius;
       const offset = circumference - (status.progressPercent / 100) * circumference;
       ring.style.strokeDashoffset = offset;
+    }
+  }
+
+  updateSyncBadge() {
+    const label = this.container.querySelector('#workoutSyncTimeLabel');
+    if (label && workoutSync.lastSyncTime) {
+      label.textContent = `Dernière synchro : ${workoutSync.lastSyncTime}`;
     }
   }
 }

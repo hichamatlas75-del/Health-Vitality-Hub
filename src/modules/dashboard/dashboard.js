@@ -39,9 +39,7 @@ export class DashboardView {
   startLiveUpdate() {
     this.stopLiveUpdate();
     this.timerInterval = setInterval(() => {
-      if (appStore.state.fasting.isActive) {
-        this.updateLiveFastingBadge();
-      }
+      this.updateLiveFastingBadge();
     }, 1000);
   }
 
@@ -190,7 +188,7 @@ export class DashboardView {
           </div>
 
           <div class="widget-body">
-            ${fastingStatus.isActive ? `
+            ${fastingStatus.phase === 'fasting' ? `
               <div class="fasting-widget-active">
                 <div class="fasting-digits-row">
                   <span id="dashFastingTimer" class="fasting-digits">${fastingStatus.elapsedFormatted}</span>
@@ -202,18 +200,34 @@ export class DashboardView {
                   <div class="progress-bar bar-orange" style="width: ${fastingStatus.progressPercent}%;"></div>
                 </div>
                 <div class="widget-hint-row">
-                  <span>Objectif : ${fastingStatus.targetHours}h (${fastingStatus.progressPercent}%)</span>
-                  <span>Restant : ${fastingStatus.remainingFormatted}</span>
+                  <span>${fastingStatus.bannerText}</span>
+                  <span>Fin à 09h00 (${fastingStatus.remainingFormatted} restant)</span>
+                </div>
+              </div>
+            ` : (fastingStatus.phase === 'eating' ? `
+              <div class="fasting-widget-active">
+                <div class="fasting-digits-row">
+                  <span id="dashFastingTimer" class="fasting-digits" style="color: var(--color-primary);">${fastingStatus.elapsedFormatted}</span>
+                  <span class="stage-tag" style="background: rgba(16, 185, 129, 0.15); color: var(--color-primary); border: 1px solid rgba(16, 185, 129, 0.3);">
+                    🥗 Fenêtre Repas
+                  </span>
+                </div>
+                <div class="progress-track mt-2">
+                  <div class="progress-bar bar-emerald" style="width: ${fastingStatus.progressPercent}%;"></div>
+                </div>
+                <div class="widget-hint-row">
+                  <span>09h00 - 15h00 (Repas sains)</span>
+                  <span>Prochain jeûne à 15h00 (${fastingStatus.remainingFormatted} restant)</span>
                 </div>
               </div>
             ` : `
               <div class="fasting-widget-idle">
-                <p class="idle-text">Aucun jeûne actif pour l'instant. Démarrez votre chrono dès la fin de votre dernier repas.</p>
+                <p class="idle-text">Aucun jeûne actif pour l'instant. Le protocole 18/6 démarre automatiquement à 15h00.</p>
                 <button id="btnDashStartFast" class="btn-primary btn-sm">
-                  ${ICONS.play} Démarrer maintenant (${FASTING_PLANS[fasting.planKey]?.name || '16:8'})
+                  ${ICONS.play} Démarrer maintenant (18:6)
                 </button>
               </div>
-            `}
+            `)}
           </div>
 
           <div class="widget-footer">
@@ -613,8 +627,6 @@ export class DashboardView {
 
   updateLiveFastingBadge() {
     const fasting = appStore.state.fasting;
-    if (!fasting.isActive) return;
-
     const status = FastingEngine.getStatus(fasting);
     const timerEl = this.container.querySelector('#dashFastingTimer');
     if (timerEl) {

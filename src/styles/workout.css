@@ -449,3 +449,44 @@
   color: var(--text-muted);
   margin-top: 2px;
 }
+
+
+/* ==========================================================================
+   Workout Home Backend Sync Banner
+   ========================================================================== */
+.workout-backend-card {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(17, 24, 39, 0.9));
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.backend-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.backend-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.backend-icon {
+  font-size: 1.2rem;
+}
+
+.backend-title {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.backend-sub {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}

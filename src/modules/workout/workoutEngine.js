@@ -4,6 +4,7 @@
  */
 
 import { audioEngine } from '../../core/audio.js';
+import { workoutSync } from './workoutSyncService.js';
 
 export const WORKOUT_STATES = {
   IDLE: 'IDLE',
@@ -209,6 +210,10 @@ export class WorkoutEngine {
     if (this.onFinish) {
       this.onFinish(summary);
     }
+
+    // Synchronisation automatique immédiate vers le backend Workout Home (Firebase RTDB)
+    workoutSync.sync().catch(e => console.warn('[WorkoutEngine] Firebase sync error:', e));
+
     if (this.onPhaseChange) {
       this.onPhaseChange(this.getStatus());
     }

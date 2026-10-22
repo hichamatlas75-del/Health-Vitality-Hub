@@ -1,31 +1,41 @@
 /**
  * Données & Protocoles de Jeûne Intermittent - Fast Master adapté
+ * Inclut le protocole phare 18/6 automatique (15h00 -> 09h00 du matin).
  */
 
 export const FASTING_PLANS = {
+  PLAN_18_6: {
+    key: 'PLAN_18_6',
+    name: '18:6 Marocain (15h - 09h)',
+    fastingHours: 18,
+    eatingHours: 6,
+    startHour: 15, // 15h00
+    endHour: 9,   // 09h00
+    autoSchedule: true,
+    emoji: '🔥',
+    difficulty: 'Recommandé',
+    desc: 'Jeûne automatique de 15h00 à 09h00 du matin. Fenêtre de repas autorisée de 09h00 à 15h00 (18h jeûne / 6h repas).'
+  },
   PLAN_16_8: {
     key: 'PLAN_16_8',
     name: '16:8 Le Classique',
     fastingHours: 16,
     eatingHours: 8,
+    startHour: 20,
+    endHour: 12,
+    autoSchedule: false,
     emoji: '⚡',
     difficulty: 'Débutant',
-    desc: '16h de jeûne et 8h d\'alimentation. Le protocole d\'or le plus accessible et équilibré.'
-  },
-  PLAN_18_6: {
-    key: 'PLAN_18_6',
-    name: '18:6 Brûle-Graisse',
-    fastingHours: 18,
-    eatingHours: 6,
-    emoji: '🔥',
-    difficulty: 'Intermédiaire',
-    desc: '18h de jeûne. Accélère la combustion des graisses, stabilise la glycémie et déclenche l\'autophagie.'
+    desc: '16h de jeûne et 8h d\'alimentation. Le protocole classique le plus populaire.'
   },
   PLAN_20_4: {
     key: 'PLAN_20_4',
     name: '20:4 Warrior',
     fastingHours: 20,
     eatingHours: 4,
+    startHour: 18,
+    endHour: 14,
+    autoSchedule: false,
     emoji: '🛡️',
     difficulty: 'Avancé',
     desc: '20h de jeûne, fenêtre de 4h pour manger. Résultats métaboliques et détox intensifiés.'
@@ -35,6 +45,9 @@ export const FASTING_PLANS = {
     name: 'OMAD (23:1)',
     fastingHours: 23,
     eatingHours: 1,
+    startHour: 16,
+    endHour: 15,
+    autoSchedule: false,
     emoji: '👑',
     difficulty: 'Expert',
     desc: 'Un seul repas complet et nutritif par jour. Autophagie profonde et clarté mentale absolue.'
@@ -44,6 +57,9 @@ export const FASTING_PLANS = {
     name: '16:8 Flexible Week-End',
     fastingHours: 16,
     eatingHours: 8,
+    startHour: 20,
+    endHour: 12,
+    autoSchedule: false,
     emoji: '🌿',
     difficulty: 'Adaptatif',
     desc: '16:8 du Lundi au Vendredi, pause le week-end pour s\'adapter à la vie sociale.'

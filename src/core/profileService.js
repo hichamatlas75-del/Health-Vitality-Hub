@@ -5,6 +5,7 @@
  */
 
 import { appStore } from './store.js';
+import { workoutSync } from '../modules/workout/workoutSyncService.js';
 
 const SUPABASE_REST_URL = 'https://plrqzuwbnuryxtsmimyt.supabase.co/rest/v1';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBscnF6dXdibnVyeXh0c21pbXl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0Mzk2OTcsImV4cCI6MjEwODAxNTY5N30.Wzx1Lsh1GGETK_RidTTND1t4Ix3EjhS3qQvlGn-Xglc';
@@ -346,6 +347,9 @@ export class ProfileBackendService {
       if (!res.ok) {
         throw new Error(`Échec HTTP ${res.status}`);
       }
+
+      // Synchroniser également avec le backend Workout Home (Firebase RTDB)
+      await workoutSync.sync().catch(e => console.warn('[ProfileService] Workout sync error:', e));
 
       this.lastSyncTime = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
       this.mirrorToOtherApps();
