@@ -11,6 +11,7 @@ import { healthAggregator } from './core/healthAggregator.js';
 
 import { CockpitView } from './modules/cockpit/cockpitView.js';
 import { ObjectifsView } from './modules/objectifs/objectifsView.js';
+import { HistoriqueView } from './modules/history/historiqueView.js';
 import { CrossView } from './modules/cross/crossView.js';
 import { SourcesView } from './modules/sources/sourcesView.js';
 
@@ -23,6 +24,8 @@ const routes = {
   dashboard: (container, navigateTo) => new CockpitView(container, navigateTo),
   cockpit: (container, navigateTo) => new CockpitView(container, navigateTo),
   objectifs: (container, navigateTo) => new ObjectifsView(container, navigateTo),
+  history: (container, navigateTo) => new HistoriqueView(container, navigateTo),
+  historique: (container, navigateTo) => new HistoriqueView(container, navigateTo),
   cross: (container, navigateTo) => new CrossView(container, navigateTo),
   sources: (container, navigateTo) => new SourcesView(container, navigateTo),
 

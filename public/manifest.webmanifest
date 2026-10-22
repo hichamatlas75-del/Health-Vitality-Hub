@@ -35,6 +35,11 @@
       "description": "Vérification de l'accomplissement des 3 piliers"
     },
     {
+      "name": "Historique des 3 Apps",
+      "url": "./index.html#history",
+      "description": "Courbes et diaporama d'évolution des repas, séances et jeûnes"
+    },
+    {
       "name": "Analyse Croisée",
       "url": "./index.html#cross",
       "description": "Corrélations métaboliques et timing des repas"

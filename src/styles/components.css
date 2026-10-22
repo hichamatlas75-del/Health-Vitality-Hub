@@ -71,12 +71,12 @@
   width: 100%;
   max-width: 680px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   background: rgba(17, 24, 39, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border-color);
-  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)) 8px;
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px)) 4px;
   z-index: 50;
 }
 
@@ -85,12 +85,12 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
   background: transparent;
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 6px 4px;
+  padding: 4px 2px;
   border-radius: var(--radius-md);
   transition: all 0.2s ease;
 }
@@ -107,7 +107,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 14px;
+  padding: 3px 10px;
   border-radius: var(--radius-full);
   transition: all 0.2s ease;
 }
@@ -118,9 +118,10 @@
 }
 
 .nav-label {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
 /* Bannière PWA Installation */

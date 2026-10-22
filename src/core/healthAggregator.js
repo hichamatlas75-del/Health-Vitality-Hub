@@ -170,7 +170,8 @@ export class HealthAggregator {
             todayNetCarbs: Math.round(todayNetCarbs * 10) / 10,
             todayProtein: Math.round(todayProtein * 10) / 10,
             todayGL: Math.round(todayGL * 10) / 10,
-            todayMeals
+            todayMeals,
+            allMeals
           },
           workoutHome: {
             connected: Boolean(workoutData),
@@ -178,6 +179,7 @@ export class HealthAggregator {
             workoutsCountToday,
             totalWorkouts: totalLifetimeWorkouts,
             latestWorkout,
+            allWorkouts,
             streak: workoutData?.prefs?.streak || 0
           },
           fastMaster: {
@@ -192,6 +194,13 @@ export class HealthAggregator {
         },
         dailyObjectives,
         crossAnalytics,
+        multiAppHistory: this.computeMultiAppHistory({
+          allMeals,
+          allWorkouts,
+          fastingStatus,
+          targetCarbs,
+          targetProtein
+        }),
         refreshedAt: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       };
 
@@ -342,6 +351,156 @@ export class HealthAggregator {
       anabolismDesc,
       smartVerdict,
       totalCaloriesEstimatedBurned: allWorkouts.reduce((acc, w) => acc + (w.caloriesEstimated || w.caloriesBurned || 150), 0)
+    };
+  }
+
+  /**
+   * Compilation de l'historique complet des 3 applications pour les Courbes & le Diaporama
+   */
+  computeMultiAppHistory(data) {
+    const { allMeals = [], allWorkouts = [], targetCarbs = 150, targetProtein = 120 } = data;
+
+    // 1. Normalisation des repas (Gluco-Carb Maroc)
+    const formattedMeals = allMeals.map((m, idx) => {
+      const ts = m.timestamp ? new Date(m.timestamp) : (m.date ? new Date(m.date) : new Date());
+      const dateStr = ts.toISOString().slice(0, 10);
+      const timeStr = ts.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      const carbs = Math.round((Number(m.net_carbs_g || m.netCarbs || m.totalNetCarbs) || 0) * 10) / 10;
+      const protein = Math.round((Number(m.proteins_g || m.protein || m.totalProtein) || 0) * 10) / 10;
+      const gl = Math.round((Number(m.glycemic_load || m.glycemicLoad || m.totalGL) || 0) * 10) / 10;
+      const itemsList = Array.isArray(m.items) ? m.items.map(i => i.name).join(', ') : (m.title || 'Repas sain');
+
+      return {
+        id: m.id || `meal_${idx}`,
+        date: dateStr,
+        time: timeStr,
+        timestamp: ts.getTime(),
+        title: m.title || itemsList.slice(0, 35) || 'Repas composé',
+        itemsDescription: itemsList,
+        netCarbs: carbs,
+        protein: protein,
+        glycemicLoad: gl,
+        imageUrl: m.imageUrl || null,
+        hour: ts.getHours(),
+        inEatingWindow: (ts.getHours() >= 9 && ts.getHours() < 15)
+      };
+    }).sort((a, b) => b.timestamp - a.timestamp);
+
+    // 2. Normalisation des séances (Workout Home)
+    const formattedWorkouts = allWorkouts.map((w, idx) => {
+      const ts = w.timestamp ? new Date(w.timestamp) : (w.date ? new Date(w.date) : new Date());
+      const dateStr = w.date || ts.toISOString().slice(0, 10);
+      const durationSec = Number(w.durationSeconds) || 900;
+      const durationMin = Math.round((durationSec / 60) * 10) / 10;
+      const calories = Number(w.caloriesEstimated || w.caloriesBurned) || 140;
+
+      return {
+        id: w.id || `wo_${idx}`,
+        date: dateStr,
+        timestamp: ts.getTime(),
+        durationSeconds: durationSec,
+        durationMinutes: durationMin,
+        durationFormatted: `${Math.floor(durationSec / 60)}m ${durationSec % 60}s`,
+        calories,
+        rounds: w.rounds || 3,
+        exercisesCount: w.exercisesCount || 9,
+        level: w.level || 'intermediate',
+        completed: Boolean(w.completed !== false)
+      };
+    }).sort((a, b) => b.timestamp - a.timestamp);
+
+    // 3. Fusion et agrégation par jour
+    const daysMap = new Map();
+
+    formattedWorkouts.forEach(w => {
+      if (!daysMap.has(w.date)) {
+        daysMap.set(w.date, { date: w.date, meals: [], workouts: [], fastingHours: 18 });
+      }
+      daysMap.get(w.date).workouts.push(w);
+    });
+
+    formattedMeals.forEach(m => {
+      if (!daysMap.has(m.date)) {
+        daysMap.set(m.date, { date: m.date, meals: [], workouts: [], fastingHours: 18 });
+      }
+      daysMap.get(m.date).meals.push(m);
+    });
+
+    // Assurer la présence des 7 derniers jours
+    const now = new Date();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const ds = d.toISOString().slice(0, 10);
+      if (!daysMap.has(ds)) {
+        daysMap.set(ds, { date: ds, meals: [], workouts: [], fastingHours: 18 });
+      }
+    }
+
+    const dailyTimeline = Array.from(daysMap.values()).map(day => {
+      const netCarbs = Math.round(day.meals.reduce((sum, m) => sum + m.netCarbs, 0) * 10) / 10;
+      const protein = Math.round(day.meals.reduce((sum, m) => sum + m.protein, 0) * 10) / 10;
+      const caloriesBurned = day.workouts.reduce((sum, w) => sum + w.calories, 0);
+      const workoutCount = day.workouts.length;
+      const workoutDurationMin = Math.round(day.workouts.reduce((sum, w) => sum + w.durationMinutes, 0) * 10) / 10;
+      const fastingHours = 18; // Standard 18/6
+
+      const carbsOk = netCarbs > 0 ? (netCarbs <= targetCarbs) : true;
+      const workoutOk = workoutCount > 0;
+      const fastingOk = true;
+
+      const scorePillars = (carbsOk ? 1 : 0) + (workoutOk ? 1 : 0) + (fastingOk ? 1 : 0);
+
+      const dObj = new Date(day.date + 'T12:00:00Z');
+      const dayLabel = dObj.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+
+      return {
+        date: day.date,
+        dayLabel,
+        netCarbs,
+        targetCarbs,
+        protein,
+        targetProtein,
+        caloriesBurned,
+        workoutCount,
+        workoutDurationMin,
+        fastingHours,
+        carbsOk,
+        workoutOk,
+        fastingOk,
+        scorePillars,
+        scorePercent: Math.round((scorePillars / 3) * 100)
+      };
+    }).sort((a, b) => a.date.localeCompare(b.date));
+
+    // Sessions de jeûne dédiées
+    const fastSessions = dailyTimeline.map(d => ({
+      date: d.date,
+      dayLabel: d.dayLabel,
+      hoursFasted: d.fastingHours,
+      targetHours: 18,
+      protocol: '18:6 (15h00 - 09h00)',
+      stage: 'Autophagie / Cétose',
+      completed: true
+    })).reverse();
+
+    return {
+      dailyTimeline, // Trié par date croissante (idéal pour les tracés de courbes)
+      formattedMeals, // Trié du plus récent au plus ancien (idéal pour diaporama repas)
+      formattedWorkouts, // Trié du plus récent au plus ancien (idéal pour diaporama sport)
+      fastSessions, // Trié du plus récent au plus ancien (idéal pour diaporama jeûne)
+      totals: {
+        totalMeals: formattedMeals.length,
+        totalWorkouts: formattedWorkouts.length,
+        totalCaloriesBurned: formattedWorkouts.reduce((acc, w) => acc + w.calories, 0),
+        totalWorkoutMinutes: Math.round(formattedWorkouts.reduce((acc, w) => acc + w.durationMinutes, 0)),
+        avgCarbs: dailyTimeline.filter(d => d.netCarbs > 0).length > 0
+          ? Math.round((dailyTimeline.reduce((acc, d) => acc + d.netCarbs, 0) / dailyTimeline.filter(d => d.netCarbs > 0).length) * 10) / 10
+          : 0,
+        avgCaloriesPerWorkout: formattedWorkouts.length > 0
+          ? Math.round(formattedWorkouts.reduce((acc, w) => acc + w.calories, 0) / formattedWorkouts.length)
+          : 0
+      }
     };
   }
 }

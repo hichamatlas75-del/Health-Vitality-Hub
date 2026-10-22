@@ -331,6 +331,15 @@ export class CockpitView {
           <span class="shortcut-arrow">→</span>
         </button>
 
+        <button class="cockpit-shortcut-btn" data-nav="history">
+          <span class="shortcut-icon">📈</span>
+          <div class="shortcut-text">
+            <strong>Historique des 3 Apps (Courbes &amp; Diaporama)</strong>
+            <span>Visualiser l'évolution des repas, séances et jeûnes</span>
+          </div>
+          <span class="shortcut-arrow">→</span>
+        </button>
+
         <button class="cockpit-shortcut-btn" data-nav="cross">
           <span class="shortcut-icon">📊</span>
           <div class="shortcut-text">

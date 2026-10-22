@@ -35,10 +35,13 @@ Tout le code source du projet unifié est situé exclusivement dans ce dossier a
 
 ---
 
-## 🧭 Navigation SPA (4 Sections Principales)
+## 🧭 Navigation SPA (5 Sections Principales)
 
 - **Cockpit (`#dashboard`)** : Vue de synthèse exécutive, jauge globale d'accomplissement des 3 piliers, conseil métabolique en direct et 3 widgets de flux en continu.
 - **Objectifs (`#objectifs`)** : Fiches détaillées des 3 objectifs journaliers avec règles strictes, état en direct, preuves de vérification et jauges de progression.
+- **Historique (`#history`)** : Visualisation évolutive complète des 3 applications avec bascule instantanée :
+  - **Mode Courbes** : Graphiques vectoriels interactifs (Glucides nets vs plafond 120g/150g & protéines, Calories brûlées sur les 37 séances, Constance du jeûne 18h).
+  - **Mode Diaporama** : Carrousel interactif avec défilement automatique / manuel (Fiches repas Gluco-Carb, Fiches séances Workout Home, Cycles de jeûne Fast Master, Tableau croisé jour par jour).
 - **Croisement (`#cross`)** : Analyse croisée avec frise chronologique 24h des repas vs jeûne 18/6, indice anabolique de récupération et bilan glycogénique.
 - **Sources (`#sources`)** : Console technique de transparence affichant l'état des serveurs Supabase REST et Firebase RTDB, les payloads JSON bruts et le sélecteur de profil.
 
