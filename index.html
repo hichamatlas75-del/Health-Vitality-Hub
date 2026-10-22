@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="./src/styles/base.css" />
   <link rel="stylesheet" href="./src/styles/components.css" />
   <link rel="stylesheet" href="./src/styles/dashboard.css" />
+  <link rel="stylesheet" href="./src/styles/cockpit.css" />
   <link rel="stylesheet" href="./src/styles/fasting.css" />
   <link rel="stylesheet" href="./src/styles/nutrition.css" />
   <link rel="stylesheet" href="./src/styles/workout.css" />
@@ -46,7 +47,7 @@
     <header class="top-header-bar">
       <div class="brand-wrapper">
         <img src="./favicon.svg" alt="Vitality Hub Logo" class="brand-logo-img" />
-        <span class="brand-title">HEALTH &amp; VITALITY HUB</span>
+        <span class="brand-title">HEALTH &amp; VITALITY COCKPIT</span>
       </div>
       <div class="header-status-area">
         <span id="offlineBadge" class="offline-badge" title="Fonctionnement hors-ligne autonome">Mode Hors-ligne 📶</span>
@@ -58,32 +59,32 @@
 
     <!-- NAVIGATION INFÉRIEURE FIXE (BOTTOM NAVIGATION) -->
     <nav class="bottom-nav-bar" aria-label="Navigation principale">
-      <button class="bottom-nav-item active" data-target="dashboard" aria-label="Tableau de bord">
+      <button class="bottom-nav-item active" data-target="dashboard" aria-label="Cockpit">
         <div class="nav-icon-wrap">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
         </div>
-        <span class="nav-label">Dashboard</span>
+        <span class="nav-label">Cockpit</span>
       </button>
 
-      <button class="bottom-nav-item" data-target="fasting" aria-label="Jeûne intermittent">
+      <button class="bottom-nav-item" data-target="objectifs" aria-label="Objectifs Journaliers">
         <div class="nav-icon-wrap">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
         </div>
-        <span class="nav-label">Jeûne</span>
+        <span class="nav-label">Objectifs</span>
       </button>
 
-      <button class="bottom-nav-item" data-target="nutrition" aria-label="Nutrition & Glucides">
+      <button class="bottom-nav-item" data-target="cross" aria-label="Analyse Croisée">
         <div class="nav-icon-wrap">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><path d="M10.4 10.4 6.4 17.6"/><path d="m13.6 13.6 4-7.2"/><path d="m17.5 7 1.5-1.5"/></svg>
         </div>
-        <span class="nav-label">Nutrition</span>
+        <span class="nav-label">Croisement</span>
       </button>
 
-      <button class="bottom-nav-item" data-target="workout" aria-label="Sport et renforcement">
+      <button class="bottom-nav-item" data-target="sources" aria-label="Sources & Backends">
         <div class="nav-icon-wrap">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
         </div>
-        <span class="nav-label">Sport</span>
+        <span class="nav-label">Sources</span>
       </button>
     </nav>
   </div>

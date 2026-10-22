@@ -7,15 +7,26 @@ import { Router } from './core/router.js';
 import { appStore } from './core/store.js';
 import { initPWA } from './core/pwa.js';
 import { profileBackend } from './core/profileService.js';
+import { healthAggregator } from './core/healthAggregator.js';
 
-import { DashboardView } from './modules/dashboard/dashboard.js';
+import { CockpitView } from './modules/cockpit/cockpitView.js';
+import { ObjectifsView } from './modules/objectifs/objectifsView.js';
+import { CrossView } from './modules/cross/crossView.js';
+import { SourcesView } from './modules/sources/sourcesView.js';
+
 import { FastingView } from './modules/fasting/fastingView.js';
 import { NutritionView } from './modules/nutrition/nutritionView.js';
 import { WorkoutView } from './modules/workout/workoutView.js';
 
-// Table de routage modulaire
+// Table de routage modulaire du Cockpit Santé & Vitalité
 const routes = {
-  dashboard: (container, navigateTo) => new DashboardView(container, navigateTo),
+  dashboard: (container, navigateTo) => new CockpitView(container, navigateTo),
+  cockpit: (container, navigateTo) => new CockpitView(container, navigateTo),
+  objectifs: (container, navigateTo) => new ObjectifsView(container, navigateTo),
+  cross: (container, navigateTo) => new CrossView(container, navigateTo),
+  sources: (container, navigateTo) => new SourcesView(container, navigateTo),
+
+  // Vues secondaires / compatibilité
   fasting: (container) => new FastingView(container),
   nutrition: (container) => new NutritionView(container),
   workout: (container) => new WorkoutView(container)
@@ -37,10 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 4. Synchronisation initiale en arrière-plan avec Supabase Cloud si connecté
+  // 4. Lecture et synchronisation immédiate des 3 backends mères (Supabase, Firebase, Fast Master)
+  healthAggregator.refresh().catch(err => {
+    console.warn('[App] HealthAggregator background sync warning:', err);
+  });
+
   if (profileBackend.isLoggedIn()) {
     profileBackend.syncToCloud().catch(err => console.warn('[App] Background sync warning:', err));
   }
 
-  console.log('⚡ Health & Vitality Hub initialisé avec backend Supabase & Firebase actif.');
+  console.log('⚡ Health & Vitality Cockpit initialisé : lecture passive des 3 backends mères active.');
 });

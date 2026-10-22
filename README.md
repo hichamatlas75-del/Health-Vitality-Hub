@@ -1,22 +1,46 @@
-# Health & Vitality Hub (PWA)
+# Health & Vitality Cockpit (PWA)
 
-Application PWA unifiée de santé métabolique, combinant en une seule interface moderne :
-1. **Jeûne Intermittent** (adapté de *Fast Master*) : Protocoles (16:8, 18:6, 20:4, OMAD, Flexible), chrono en temps réel, 6 étapes métaboliques avec conseils et effets physiologiques.
-2. **Nutrition & Glucides Marocains** (adapté de *Gluco-Carb Maroc*) : Catalogue de plats et pâtisseries du Maroc (tajines, couscous, khobz, msemen, etc.), calcul des glucides nets, protéines, charge glycémique (CG) et score d'amorti `(P+F)/G`.
-3. **Sport Maison** (adapté de *Workout Home*) : 20 exercices guidés au poids du corps, routines par niveau (Débutant, Intermédiaire, Avancé), chrono d'effort/repos synchronisé avec coach vocal (Speech Synthesis) et signaux sonores (Web Audio API).
-4. **Tableau de Bord de Synthèse (Dashboard)** : Vue d'ensemble quotidienne synthétisant le Score de Vitalité (0 à 100%), le chrono de jeûne en cours, le cumul des glucides consommés face à la limite journalière, et l'état de la séance de sport du jour.
+Application PWA unifiée de **pilotage exécutif, lecture passive et analyse croisée métabolique** connectée en direct aux backends des 3 applications mères :
+1. **Gluco-Carb Maroc** : Backend Supabase Cloud REST (`app_accounts`), lecture des macronutriments, glucides nets, protéines, charge glycémique et horodatage des repas.
+2. **Workout Home** : Backend Firebase Realtime Database chiffré de bout en bout en AES-256-GCM Zero-Knowledge (`workout_profiles`), lecture de l'historique des séances (Full Body 17), des calories et de la série d'assiduité.
+3. **Fast Master** : Moteur de jeûne intermittent 18/6 automatique (15h00 - 09h00), calcul en temps réel des étapes métaboliques (Chute Insuline, Cétose, Autophagie) et respect de la fenêtre alimentaire.
 
 ---
 
-## 🔒 Intégrité & Sécurité des Sources
+## 🎯 Rôle Exécutif : Lecture, Croisement & Objectifs Journaliers
+
+Conformément à la stratégie d'architecture, cette application est un **Tableau de Bord Exécutif (Cockpit)** qui :
+- **Lit en continu les données et performances du profil partagé (`hicham`)** sans modifier les applications mères.
+- **Croise les données (Cross-Analytics)** :
+  - **Timing Repas vs Fenêtre 18/6** : Vérification chronobiologique que chaque repas pris dans *Gluco-Carb Maroc* se situe bien à l'intérieur de la fenêtre autorisée (09h00 - 15h00). Alerte automatique en cas de rupture de jeûne hors-fenêtre.
+  - **Synergie Anabolique (Sport ↔ Protéines)** : Corrélation entre le stimulus musculaire issu de *Workout Home* et le quota de protéines absorbé dans *Gluco-Carb Maroc* (cible 120g).
+  - **Recharge Glycogénique vs Dépense Sportive** : Équilibre entre les glucides nets ingérés (≤ 150g) et les calories dépensées (4 248 kcal cumulées).
+- **Définit 3 Objectifs Journaliers et vérifie leur accomplissement en temps réel** :
+  1. ⚡ **Pilier 1 : Jeûne 18/6** (Fenêtre 15h00 - 09h00 respectée).
+  2. 🥗 **Pilier 2 : Glucides Nets ≤ 150g & Protéines ≥ 120g** (Plafond respecté).
+  3. 🏋️ **Pilier 3 : Entraînement Quotidien Full Body 17** (1 séance validée le jour même).
+  - **Score global d'accomplissement** en temps réel (ex: 2/3 Validés, 67%).
+
+---
+
+## 🔒 Intégrité & Sécurité Absolue des Sources
 
 Les 3 répertoires d'origine sont restés **100% intacts et en lecture seule stricte** :
-- `calculateur glucides` : aucun fichier modifié.
-- `FAST-MASTER` : aucun fichier modifié.
-- `WORK OUT` : aucun fichier modifié.
+- `calculateur glucides` : aucun fichier modifié, déplacé ou écrasé.
+- `FAST-MASTER` : aucun fichier modifié, déplacé ou écrasé.
+- `WORK OUT` : aucun fichier modifié, déplacé ou écrasé.
 
 Tout le code source du projet unifié est situé exclusivement dans ce dossier autonome :
 `C:\Users\mplp000\OneDrive\Dokumente\GitHub\unified-health-pwa`
+
+---
+
+## 🧭 Navigation SPA (4 Sections Principales)
+
+- **Cockpit (`#dashboard`)** : Vue de synthèse exécutive, jauge globale d'accomplissement des 3 piliers, conseil métabolique en direct et 3 widgets de flux en continu.
+- **Objectifs (`#objectifs`)** : Fiches détaillées des 3 objectifs journaliers avec règles strictes, état en direct, preuves de vérification et jauges de progression.
+- **Croisement (`#cross`)** : Analyse croisée avec frise chronologique 24h des repas vs jeûne 18/6, indice anabolique de récupération et bilan glycogénique.
+- **Sources (`#sources`)** : Console technique de transparence affichant l'état des serveurs Supabase REST et Firebase RTDB, les payloads JSON bruts et le sélecteur de profil.
 
 ---
 
@@ -24,61 +48,11 @@ Tout le code source du projet unifié est situé exclusivement dans ce dossier a
 
 - **Bundler & Dev Server** : [Vite](https://vitejs.dev/) v5 (Ultra-rapide, HMR, zéro configuration superflue).
 - **Architecture** : Vanilla JavaScript ES Modules (modulaire, sans framework lourd, zéro dépendance superflue).
-- **Audio & Voix** : Web Audio API (synthèse des signaux et bips hors-ligne) & Web Speech API (coach vocal en français).
-- **Maintien de l'écran allumé** : Screen Wake Lock API.
+- **Sécurité & Chiffrement** : Web Crypto API (SubtleCrypto) avec dérivation PBKDF2 (10 000 itérations) et déchiffrement AES-256-GCM Zero-Knowledge identique à Workout Home.
+- **Backends connectés** :
+  - Supabase REST API (`plrqzuwbnuryxtsmimyt.supabase.co`)
+  - Firebase Realtime Database (`workout-homefb17-default-rtdb.europe-west1.firebasedatabase.app`)
 - **PWA & Offline** : Service Worker (`sw.js`) avec stratégie de mise en cache locale et manifeste PWA standard (`manifest.webmanifest`).
-- **Persistance** : LocalStorage unifié sous la clé `health_vitality_hub_data_v1` avec fonction d'export/import de sauvegarde JSON.
-
----
-
-## 📂 Structure du Projet
-
-```text
-unified-health-pwa/
-├── dist/                          # Compilation prête pour production / Cloudflare Pages
-├── public/
-│   ├── _headers                   # En-têtes HTTP de sécurité et cache pour Cloudflare Pages
-│   ├── favicon.svg                # Favicon vectoriel haute résolution
-│   ├── manifest.webmanifest       # Configuration PWA standard
-│   ├── sw.js                      # Service Worker offline
-│   └── icons/
-│       ├── icon-192.svg           # Icône PWA 192x192
-│       └── icon-512.svg           # Icône PWA 512x512
-├── src/
-│   ├── core/
-│   │   ├── audio.js               # Signaux sonores et coach vocal hors-ligne
-│   │   ├── pwa.js                 # Détection hors-ligne et installation PWA
-│   │   ├── router.js              # Routeur SPA sans rechargement
-│   │   └── store.js               # Store réactif unifié & persistance locale
-│   ├── modules/
-│   │   ├── dashboard/
-│   │   │   └── dashboard.js       # Vue Dashboard & Score de Vitalité
-│   │   ├── fasting/
-│   │   │   ├── fastingData.js     # Protocoles & Étapes métaboliques
-│   │   │   ├── fastingEngine.js   # Moteur de calcul du jeûne
-│   │   │   └── fastingView.js     # Interface interactive du jeûne
-│   │   ├── nutrition/
-│   │   │   ├── foodsData.js       # Base alimentaire marocaine & presets
-│   │   │   ├── nutritionEngine.js # Moteur métabolique & amorti glycémique
-│   │   │   └── nutritionView.js   # Interface composeur d'assiette & journal
-│   │   └── workout/
-│   │       ├── exerciseData.js    # 20 exercices & routines par niveau
-│   │       ├── workoutEngine.js   # Machine à états d'effort/repos & WakeLock
-│   │       └── workoutView.js     # Interface de séance & player actif
-│   ├── styles/
-│   │   ├── base.css               # Reset, typographie, design tokens
-│   │   ├── components.css         # Bottom Navigation Bar, cartes, boutons
-│   │   ├── dashboard.css          # Styles du tableau de bord
-│   │   ├── fasting.css            # Styles du chrono et étapes
-│   │   ├── nutrition.css          # Styles nutrition & aliments
-│   │   └── workout.css            # Styles de séance & player actif
-│   ├── ui/
-│   │   └── icons.js               # Bibliothèque d'icônes SVG intégrées
-│   └── main.js                    # Point d'entrée principal
-├── index.html                     # Squelette HTML5 SPA
-├── package.json                   # Scripts et dépendances
-└── vite.config.js                 # Configuration de build Vite
-```
 
 ---
 
@@ -99,22 +73,4 @@ L'application démarre immédiatement sur `http://localhost:3000` (ou le port in
 ```bash
 npm run build
 ```
-Les fichiers compilés et optimisés sont générés dans le dossier `dist/`.
-
-### 4. Tester la version de Production localement
-```bash
-npm run preview
-```
-
----
-
-## ☁️ Déploiement sur Cloudflare Pages
-
-Le dossier `dist/` est 100% prêt à être déployé sur Cloudflare Pages :
-1. Créez un nouveau projet sur **Cloudflare Pages** (connecté à votre dépôt GitHub ou via Direct Upload / Wrangler).
-2. Paramètres de compilation recommandés :
-   - **Framework preset** : `Vite` (ou `None`)
-   - **Build command** : `npm run build`
-   - **Build output directory** : `dist`
-   - **Root directory** : `unified-health-pwa`
-3. Le fichier `public/_headers` est automatiquement copié dans `dist/` pour configurer le cache et les en-têtes de sécurité.
+Les fichiers statiques finaux sont générés dans le dossier `/dist`, prêts à être déployés sur Cloudflare Pages, Vercel ou Firebase Hosting.

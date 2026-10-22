@@ -1,7 +1,7 @@
 {
-  "name": "Health & Vitality Hub",
-  "short_name": "VitalityHub",
-  "description": "Application unifiée Santé : Jeûne Intermittent, Nutrition & Glucides Marocains, Sport Maison.",
+  "name": "Health & Vitality Cockpit",
+  "short_name": "VitalityCockpit",
+  "description": "Cockpit exécutif de santé : Tableau de bord de lecture des 3 applications mères, analyse croisée métabolique et validation des objectifs journaliers.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#090d16",
@@ -25,19 +25,24 @@
   "categories": ["health", "fitness", "lifestyle", "medical"],
   "shortcuts": [
     {
-      "name": "Démarrer le Jeûne",
-      "url": "./index.html#fasting",
-      "description": "Accès direct au suivi de jeûne intermittent"
+      "name": "Cockpit Exécutif",
+      "url": "./index.html#dashboard",
+      "description": "Synthèse et tableau de bord en temps réel"
     },
     {
-      "name": "Calculer un Repas",
-      "url": "./index.html#nutrition",
-      "description": "Calculateur de glucides et repas marocains"
+      "name": "Objectifs Journaliers",
+      "url": "./index.html#objectifs",
+      "description": "Vérification de l'accomplissement des 3 piliers"
     },
     {
-      "name": "Séance de Sport",
-      "url": "./index.html#workout",
-      "description": "Entraînement guidé au poids du corps"
+      "name": "Analyse Croisée",
+      "url": "./index.html#cross",
+      "description": "Corrélations métaboliques et timing des repas"
+    },
+    {
+      "name": "Sources & Backends",
+      "url": "./index.html#sources",
+      "description": "Inspection directe des flux Supabase et Firebase"
     }
   ]
 }
