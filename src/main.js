@@ -6,6 +6,7 @@
 import { Router } from './core/router.js';
 import { appStore } from './core/store.js';
 import { initPWA } from './core/pwa.js';
+import { profileBackend } from './core/profileService.js';
 
 import { DashboardView } from './modules/dashboard/dashboard.js';
 import { FastingView } from './modules/fasting/fastingView.js';
@@ -31,11 +32,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 3. Écouter les changements dans le store pour actualiser les indicateurs globaux
   appStore.subscribe((state) => {
-    // Si la vue active dispose d'une méthode de mise à jour légère, elle peut réagir
     if (router.currentViewInstance && typeof router.currentViewInstance.onStoreUpdate === 'function') {
       router.currentViewInstance.onStoreUpdate(state);
     }
   });
 
-  console.log('⚡ Health & Vitality Hub initialisé avec succès.');
+  // 4. Synchronisation initiale en arrière-plan avec Supabase Cloud si connecté
+  if (profileBackend.isLoggedIn()) {
+    profileBackend.syncToCloud().catch(err => console.warn('[App] Background sync warning:', err));
+  }
+
+  console.log('⚡ Health & Vitality Hub initialisé avec backend Supabase & Firebase actif.');
 });

@@ -47,6 +47,7 @@ class Store {
 
   load() {
     try {
+      if (typeof localStorage === 'undefined') return JSON.parse(JSON.stringify(DEFAULT_STATE));
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return JSON.parse(JSON.stringify(DEFAULT_STATE));
       const parsed = JSON.parse(raw);
@@ -65,6 +66,10 @@ class Store {
 
   save() {
     try {
+      if (typeof localStorage === 'undefined') {
+        this.notify();
+        return;
+      }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
       this.notify();
     } catch (e) {

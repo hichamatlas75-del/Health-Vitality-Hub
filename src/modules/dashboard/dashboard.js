@@ -1,11 +1,13 @@
 /**
  * Dashboard View Controller - Health & Vitality Hub
- * Vue de synthèse unifiée : Jeûne en cours, Cumul des Glucides et Séance de Sport.
+ * Vue de synthèse unifiée : Jeûne en cours, Cumul des Glucides, Séance de Sport
+ * et Gestionnaire de Profil connecté au backend Supabase Cloud & Workout Home.
  */
 
 import { appStore } from '../../core/store.js';
 import { FastingEngine } from '../fasting/fastingEngine.js';
 import { FASTING_PLANS } from '../fasting/fastingData.js';
+import { profileBackend } from '../../core/profileService.js';
 import { ICONS } from '../../ui/icons.js';
 
 export class DashboardView {
@@ -13,11 +15,21 @@ export class DashboardView {
     this.container = container;
     this.navigateToTab = navigateToTab;
     this.timerInterval = null;
+    this.authMode = 'login'; // 'login' | 'register'
   }
 
   mount() {
     this.render();
     this.startLiveUpdate();
+
+    // Auto-synchro en arrière-plan si connecté
+    if (profileBackend.isLoggedIn()) {
+      profileBackend.syncToCloud().then(res => {
+        if (res && res.success) {
+          this.updateSyncUI();
+        }
+      });
+    }
   }
 
   unmount() {
@@ -61,7 +73,7 @@ export class DashboardView {
     } else if (todayNetCarbs > carbsTarget) {
       score += Math.max(10, 35 - Math.round(((todayNetCarbs - carbsTarget) / carbsTarget) * 25));
     } else {
-      score += 20; // Neutre au réveil
+      score += 20;
     }
 
     // Sport (max 30 pts)
@@ -104,20 +116,27 @@ export class DashboardView {
     const todayNetCarbs = appStore.getTodayNetCarbs();
     const todayProtein = appStore.getTodayProtein();
     const carbsTarget = user.carbsDailyTarget || 120;
+    const proteinTarget = user.proteinDailyTarget || 80;
     const carbsPct = Math.min(100, Math.round((todayNetCarbs / carbsTarget) * 100));
 
     const vitalityScore = this.computeVitalityScore();
     const smartAdvice = this.getSmartAdvice(fastingStatus, todayNetCarbs, workout.todayCompleted);
+    const isCloudConnected = profileBackend.isLoggedIn();
 
     this.container.innerHTML = `
       <!-- EN-TÊTE DASHBOARD -->
       <div class="dashboard-header">
         <div class="user-welcome">
-          <span class="user-greeting">SANTÉ & VITALITÉ HUB</span>
+          <div class="cloud-user-status-pill">
+            <span class="status-indicator-dot ${isCloudConnected ? 'dot-online' : 'dot-offline'}"></span>
+            <span class="status-user-label">
+              ${isCloudConnected ? `Profil Cloud : ${profileBackend.currentUser.displayName || profileBackend.currentUser.username}` : 'Profil Local (Non connecté)'}
+            </span>
+          </div>
           <h1 class="user-name">Bonjour, ${user.name} 👋</h1>
           <span class="dashboard-date">${new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
         </div>
-        <button id="btnOpenSettings" class="btn-settings-trigger" title="Réglages & Profil">
+        <button id="btnOpenSettings" class="btn-settings-trigger" title="Réglages & Profil Cloud">
           ${ICONS.settings}
         </button>
       </div>
@@ -231,7 +250,7 @@ export class DashboardView {
               </div>
 
               <div class="macro-mini-row">
-                <span>🍗 Protéines : <strong>${Math.round(todayProtein)}g</strong></span>
+                <span>🍗 Protéines : <strong>${Math.round(todayProtein)}g</strong> / ${proteinTarget}g</span>
                 <span>🍽️ Repas saisis : <strong>${appStore.getTodayMeals().length}</strong></span>
               </div>
             </div>
@@ -283,40 +302,113 @@ export class DashboardView {
 
       </div>
 
-      <!-- MODAL RÉGLAGES & PROFIL -->
+      <!-- MODAL RÉGLAGES & PROFIL CLOUD SUPABASE -->
       <div id="settingsModal" class="modal-backdrop" style="display: none;">
         <div class="modal-card">
           <div class="modal-header">
-            <h3>Paramètres & Sauvegarde</h3>
+            <h3>Profil & Backend Cloud Unifié</h3>
             <button id="btnCloseSettings" class="btn-icon-soft">${ICONS.close}</button>
           </div>
           <div class="modal-body">
-            <div class="form-group">
-              <label class="form-label">Votre Prénom / Pseudo :</label>
-              <input type="text" id="settingName" class="form-input" value="${user.name}" />
-            </div>
 
-            <div class="form-row">
-              <div class="form-group flex-1">
-                <label class="form-label">Poids (kg) :</label>
-                <input type="number" id="settingWeight" class="form-input" value="${user.weight || 70}" />
+            <!-- SECTION CONNEXION CLOUD SUPABASE / WORKOUT HOME -->
+            <div class="cloud-auth-card">
+              <div class="cloud-header-row">
+                <div class="cloud-brand-tag">
+                  <span class="cloud-icon">☁️</span>
+                  <strong>Synchronisation Cloud (Supabase & Firebase)</strong>
+                </div>
+                <span id="cloudStatusTag" class="badge-${isCloudConnected ? 'success' : 'pending'}">
+                  ${isCloudConnected ? 'Connecté' : 'Hors-ligne'}
+                </span>
               </div>
-              <div class="form-group flex-1">
-                <label class="form-label">Taille (cm) :</label>
-                <input type="number" id="settingHeight" class="form-input" value="${user.height || 175}" />
+
+              <p class="text-xs text-muted mt-2">
+                Partagez le même profil, les mêmes repas et les mêmes objectifs entre <strong>Gluco-Carb Maroc</strong>, <strong>Fast Master</strong> et <strong>Workout Home</strong>.
+              </p>
+
+              ${isCloudConnected ? `
+                <div class="logged-in-box">
+                  <div class="logged-user-row">
+                    <span>Compte actif : <strong>${profileBackend.currentUser.username}</strong></span>
+                    <button id="btnLogoutCloud" class="btn-link-danger">Déconnexion</button>
+                  </div>
+                  <div class="sync-actions-row">
+                    <button id="btnManualSync" class="btn-primary btn-sm">
+                      🔄 Synchroniser avec le Cloud
+                    </button>
+                    <span id="lastSyncLabel" class="sync-timestamp">
+                      ${profileBackend.lastSyncTime ? `Dernière synchro : ${profileBackend.lastSyncTime}` : 'Prêt à synchroniser'}
+                    </span>
+                  </div>
+                </div>
+              ` : `
+                <div class="auth-forms-container">
+                  <div class="auth-tabs-row">
+                    <button class="auth-tab ${this.authMode === 'login' ? 'active' : ''}" id="tabAuthLogin">Connexion</button>
+                    <button class="auth-tab ${this.authMode === 'register' ? 'active' : ''}" id="tabAuthRegister">Nouveau Compte</button>
+                  </div>
+
+                  <div class="auth-inputs-box">
+                    <div class="form-group">
+                      <label class="form-label">Pseudo :</label>
+                      <input type="text" id="authUsername" class="form-input" placeholder="ex: hicham" />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Mot de passe :</label>
+                      <input type="password" id="authPassword" class="form-input" placeholder="••••••••" />
+                    </div>
+                    <div id="authErrorMsg" class="auth-error-msg" style="display: none;"></div>
+                    <button id="btnSubmitAuth" class="btn-primary btn-block">
+                      ${this.authMode === 'login' ? 'Se connecter & Synchroniser' : 'Créer mon Profil Cloud'}
+                    </button>
+                  </div>
+                </div>
+              `}
+            </div>
+
+            <!-- RÉGLAGES PHYSIQUES & OBJECTIFS -->
+            <div class="profile-metrics-card mt-4">
+              <h4 class="settings-subheading">Mesures Corporelles & Quotas</h4>
+
+              <div class="form-group">
+                <label class="form-label">Nom d'affichage :</label>
+                <input type="text" id="settingName" class="form-input" value="${user.name}" />
               </div>
+
+              <div class="form-row">
+                <div class="form-group flex-1">
+                  <label class="form-label">Poids (kg) :</label>
+                  <input type="number" id="settingWeight" class="form-input" value="${user.weight || 70}" step="0.5" />
+                </div>
+                <div class="form-group flex-1">
+                  <label class="form-label">Taille (cm) :</label>
+                  <input type="number" id="settingHeight" class="form-input" value="${user.height || 175}" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group flex-1">
+                  <label class="form-label">Quota Glucides Nets (g/j) :</label>
+                  <input type="number" id="settingCarbsLimit" class="form-input" value="${carbsTarget}" />
+                </div>
+                <div class="form-group flex-1">
+                  <label class="form-label">Objectif Protéines (g/j) :</label>
+                  <input type="number" id="settingProteinLimit" class="form-input" value="${proteinTarget}" />
+                </div>
+              </div>
+
+              <button id="btnSaveSettings" class="btn-primary btn-block mt-2">
+                Enregistrer & Mettre à jour le Cloud
+              </button>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">Limite glucides nets/jour (g) :</label>
-              <input type="number" id="settingCarbsLimit" class="form-input" value="${carbsTarget}" />
-            </div>
-
-            <div class="backup-actions-box">
-              <h4>Sauvegarde Locale Unifiée</h4>
-              <p class="text-xs text-muted">Exportez ou restaurez toutes vos données (jeûne, repas, séances de sport) en un clic.</p>
+            <!-- BACKUP MANUEL JSON -->
+            <div class="backup-actions-box mt-4">
+              <h4>Sauvegarde Fichier JSON</h4>
+              <p class="text-xs text-muted">Copie locale physique de sécurité.</p>
               <div class="backup-buttons">
-                <button id="btnExportBackup" class="btn-secondary btn-sm">Exporter sauvegarde JSON</button>
+                <button id="btnExportBackup" class="btn-secondary btn-sm">Exporter JSON</button>
                 <label class="btn-secondary btn-sm cursor-pointer">
                   Importer JSON
                   <input type="file" id="importFileInput" accept=".json" style="display: none;" />
@@ -324,9 +416,6 @@ export class DashboardView {
               </div>
             </div>
 
-            <button id="btnSaveSettings" class="btn-primary btn-block mt-4">
-              Enregistrer les modifications
-            </button>
           </div>
         </div>
       </div>
@@ -374,28 +463,124 @@ export class DashboardView {
       });
     }
 
-    // Sauvegarde réglages
+    // Onglets Auth (Login / Register)
+    const tabLogin = this.container.querySelector('#tabAuthLogin');
+    const tabReg = this.container.querySelector('#tabAuthRegister');
+    if (tabLogin && tabReg) {
+      tabLogin.addEventListener('click', () => {
+        this.authMode = 'login';
+        this.render();
+        const m = this.container.querySelector('#settingsModal');
+        if (m) m.style.display = 'flex';
+      });
+      tabReg.addEventListener('click', () => {
+        this.authMode = 'register';
+        this.render();
+        const m = this.container.querySelector('#settingsModal');
+        if (m) m.style.display = 'flex';
+      });
+    }
+
+    // Bouton Connexion / Inscription Cloud
+    const btnSubmitAuth = this.container.querySelector('#btnSubmitAuth');
+    if (btnSubmitAuth) {
+      btnSubmitAuth.addEventListener('click', async () => {
+        const usernameInp = this.container.querySelector('#authUsername');
+        const passInp = this.container.querySelector('#authPassword');
+        const errEl = this.container.querySelector('#authErrorMsg');
+
+        const username = usernameInp ? usernameInp.value.trim() : '';
+        const password = passInp ? passInp.value.trim() : '';
+
+        if (errEl) errEl.style.display = 'none';
+        btnSubmitAuth.disabled = true;
+        btnSubmitAuth.textContent = 'Connexion en cours...';
+
+        try {
+          if (this.authMode === 'login') {
+            await profileBackend.login(username, password);
+          } else {
+            await profileBackend.register(username, password, {
+              name: username,
+              carbsDailyTarget: appStore.state.user.carbsDailyTarget,
+              proteinDailyTarget: appStore.state.user.proteinDailyTarget,
+              weight: appStore.state.user.weight,
+              height: appStore.state.user.height
+            });
+          }
+          this.render();
+          const m = this.container.querySelector('#settingsModal');
+          if (m) m.style.display = 'flex';
+        } catch (err) {
+          if (errEl) {
+            errEl.textContent = err.message || 'Erreur d\'authentification';
+            errEl.style.display = 'block';
+          }
+          btnSubmitAuth.disabled = false;
+          btnSubmitAuth.textContent = this.authMode === 'login' ? 'Se connecter' : 'Créer mon Profil Cloud';
+        }
+      });
+    }
+
+    // Déconnexion Cloud
+    const btnLogout = this.container.querySelector('#btnLogoutCloud');
+    if (btnLogout) {
+      btnLogout.addEventListener('click', () => {
+        profileBackend.logout();
+        this.render();
+        const m = this.container.querySelector('#settingsModal');
+        if (m) m.style.display = 'flex';
+      });
+    }
+
+    // Synchronisation manuelle Cloud
+    const btnManualSync = this.container.querySelector('#btnManualSync');
+    if (btnManualSync) {
+      btnManualSync.addEventListener('click', async () => {
+        btnManualSync.disabled = true;
+        btnManualSync.textContent = 'Synchronisation...';
+        const res = await profileBackend.syncToCloud();
+        btnManualSync.disabled = false;
+        btnManualSync.textContent = '🔄 Synchroniser avec le Cloud';
+        if (res && res.success) {
+          const syncLabel = this.container.querySelector('#lastSyncLabel');
+          if (syncLabel) syncLabel.textContent = `Dernière synchro : ${res.lastSyncTime}`;
+          alert('Données synchronisées avec succès avec Supabase Cloud !');
+        } else {
+          alert('Erreur lors de la synchronisation : ' + (res?.error || 'inconnue'));
+        }
+      });
+    }
+
+    // Enregistrement des réglages du profil & push cloud
     const btnSaveSettings = this.container.querySelector('#btnSaveSettings');
     if (btnSaveSettings) {
-      btnSaveSettings.addEventListener('click', () => {
+      btnSaveSettings.addEventListener('click', async () => {
         const name = this.container.querySelector('#settingName')?.value || 'Champion(ne)';
         const weight = parseFloat(this.container.querySelector('#settingWeight')?.value) || 70;
         const height = parseFloat(this.container.querySelector('#settingHeight')?.value) || 175;
         const carbs = parseInt(this.container.querySelector('#settingCarbsLimit')?.value, 10) || 120;
+        const protein = parseInt(this.container.querySelector('#settingProteinLimit')?.value, 10) || 80;
 
         appStore.updateUser({
           name,
           weight,
           height,
-          carbsDailyTarget: carbs
+          carbsDailyTarget: carbs,
+          proteinDailyTarget: protein
         });
+
+        // Push automatique vers le Cloud si connecté
+        if (profileBackend.isLoggedIn()) {
+          await profileBackend.syncToCloud();
+        }
 
         if (modal) modal.style.display = 'none';
         this.render();
       });
     }
 
-    // Exportation backup
+    // Exportation backup JSON
     const btnExport = this.container.querySelector('#btnExportBackup');
     if (btnExport) {
       btnExport.addEventListener('click', () => {
@@ -403,7 +588,7 @@ export class DashboardView {
       });
     }
 
-    // Importation backup
+    // Importation backup JSON
     const fileInput = this.container.querySelector('#importFileInput');
     if (fileInput) {
       fileInput.addEventListener('change', (e) => {
@@ -434,6 +619,13 @@ export class DashboardView {
     const timerEl = this.container.querySelector('#dashFastingTimer');
     if (timerEl) {
       timerEl.textContent = status.elapsedFormatted;
+    }
+  }
+
+  updateSyncUI() {
+    const syncLabel = this.container.querySelector('#lastSyncLabel');
+    if (syncLabel && profileBackend.lastSyncTime) {
+      syncLabel.textContent = `Dernière synchro : ${profileBackend.lastSyncTime}`;
     }
   }
 }
