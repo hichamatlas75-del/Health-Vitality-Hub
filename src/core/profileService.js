@@ -138,12 +138,14 @@ export class ProfileBackendService {
     const settings = account.settings || {};
     appStore.updateUser({
       name: account.display_name || clean,
-      carbsDailyTarget: Number(settings.dailyTargetCarbs) || 120,
-      proteinDailyTarget: Number(settings.dailyTargetProtein) || 80,
-      weight: Number(settings.weight) || appStore.state.user.weight || 70,
-      height: Number(settings.height) || appStore.state.user.height || 175,
+      carbsDailyTarget: Number(settings.dailyTargetCarbs) || 150,
+      proteinDailyTarget: Number(settings.dailyTargetProtein) || 150,
+      fatDailyTarget: Number(settings.dailyTargetFat) || 80,
+      caloriesDailyTarget: Number(settings.dailyTargetCalories) || 1950,
+      weight: Number(settings.weight) || appStore.state.user.weight || 85,
+      height: Number(settings.height) || appStore.state.user.height || 183,
       workoutLevel: settings.workoutLevel || 'intermediate',
-      fastingPlan: settings.fastingPlan || 'PLAN_16_8'
+      fastingPlan: settings.fastingPlan || 'PLAN_18_6'
     });
 
     // Synchronisation des repas si présents dans le compte cloud
@@ -153,20 +155,28 @@ export class ProfileBackendService {
       const todayMeals = account.history.filter(m => {
         const itemDate = m.date || (m.timestamp ? new Date(m.timestamp).toISOString().slice(0, 10) : '');
         return itemDate === todayStr;
-      }).map(m => ({
-        id: String(m.id || m.timestamp || Date.now()),
-        timestamp: m.timestamp || Date.now(),
-        timeFormatted: m.timeFormatted || new Date(m.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        mealType: m.mealType || m.type || 'Repas',
-        title: m.title || 'Repas synchronisé',
-        items: m.items || [],
-        totalGrams: m.portion_total_weight_g || m.totalGrams || 0,
-        totalNetCarbs: m.netCarbs || m.net_carbs_g || m.totalNetCarbs || 0,
-        totalProtein: m.protein || m.proteins_g || m.totalProtein || 0,
-        totalFiber: m.fiber || m.fibers_g || m.totalFiber || 0,
-        totalGL: m.glycemicLoad || m.glycemic_load || m.totalGL || 0,
-        amortiScore: m.amortiScore || 'normal'
-      }));
+      }).map(m => {
+        const carbs = Number(m.netCarbs || m.net_carbs_g || m.totalNetCarbs || 0);
+        const prot = Number(m.protein || m.proteins_g || m.totalProtein || 0);
+        const fat = Number(m.fat || m.fat_g || m.totalFat || m.lipides || 0);
+        const cal = Number(m.calories || m.kcal || m.totalCalories || Math.round(prot * 4 + carbs * 4 + fat * 9));
+        return {
+          id: String(m.id || m.timestamp || Date.now()),
+          timestamp: m.timestamp || Date.now(),
+          timeFormatted: m.timeFormatted || new Date(m.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          mealType: m.mealType || m.type || 'Repas',
+          title: m.title || 'Repas synchronisé',
+          items: m.items || [],
+          totalGrams: m.portion_total_weight_g || m.totalGrams || 0,
+          totalNetCarbs: carbs,
+          totalProtein: prot,
+          totalFat: fat,
+          totalCalories: cal,
+          totalFiber: m.fiber || m.fibers_g || m.totalFiber || 0,
+          totalGL: m.glycemicLoad || m.glycemic_load || m.totalGL || 0,
+          amortiScore: m.amortiScore || 'normal'
+        };
+      });
 
       if (todayMeals.length > 0) {
         appStore.state.nutrition.todayMeals = todayMeals;
@@ -205,11 +215,13 @@ export class ProfileBackendService {
       password_hash: passwordHash,
       user_mode: initialData.workoutLevel || 'sport',
       settings: {
-        dailyTargetCarbs: initialData.carbsDailyTarget || 120,
-        dailyTargetProtein: initialData.proteinDailyTarget || 80,
-        weight: initialData.weight || 70,
-        height: initialData.height || 175,
-        fastingPlan: initialData.fastingPlan || 'PLAN_16_8',
+        dailyTargetCarbs: initialData.carbsDailyTarget || 150,
+        dailyTargetProtein: initialData.proteinDailyTarget || 150,
+        dailyTargetFat: initialData.fatDailyTarget || 80,
+        dailyTargetCalories: initialData.caloriesDailyTarget || 1950,
+        weight: initialData.weight || 85,
+        height: initialData.height || 183,
+        fastingPlan: initialData.fastingPlan || 'PLAN_18_6',
         workoutLevel: initialData.workoutLevel || 'intermediate',
         __settingsUpdatedAt: nowIso
       },
@@ -254,10 +266,12 @@ export class ProfileBackendService {
 
     appStore.updateUser({
       name: initialData.name || clean,
-      carbsDailyTarget: initialData.carbsDailyTarget || 120,
-      proteinDailyTarget: initialData.proteinDailyTarget || 80,
-      weight: initialData.weight || 70,
-      height: initialData.height || 175
+      carbsDailyTarget: initialData.carbsDailyTarget || 150,
+      proteinDailyTarget: initialData.proteinDailyTarget || 150,
+      fatDailyTarget: initialData.fatDailyTarget || 80,
+      caloriesDailyTarget: initialData.caloriesDailyTarget || 1950,
+      weight: initialData.weight || 85,
+      height: initialData.height || 183
     });
 
     this.lastSyncTime = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -321,11 +335,13 @@ export class ProfileBackendService {
         user_mode: user.workoutLevel || 'sport',
         settings: {
           ...(cloudAccount?.settings || {}),
-          dailyTargetCarbs: user.carbsDailyTarget || 120,
-          dailyTargetProtein: user.proteinDailyTarget || 80,
-          weight: user.weight || 70,
-          height: user.height || 175,
-          fastingPlan: appStore.state.fasting.planKey || 'PLAN_16_8',
+          dailyTargetCarbs: user.carbsDailyTarget || 150,
+          dailyTargetProtein: user.proteinDailyTarget || 150,
+          dailyTargetFat: user.fatDailyTarget || 80,
+          dailyTargetCalories: user.caloriesDailyTarget || 1950,
+          weight: user.weight || 85,
+          height: user.height || 183,
+          fastingPlan: appStore.state.fasting.planKey || 'PLAN_18_6',
           workoutLevel: user.workoutLevel || 'intermediate',
           __settingsUpdatedAt: nowIso
         },

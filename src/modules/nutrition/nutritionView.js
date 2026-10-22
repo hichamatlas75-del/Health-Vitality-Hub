@@ -28,11 +28,17 @@ export class NutritionView {
   render() {
     const todayNetCarbs = appStore.getTodayNetCarbs();
     const todayProtein = appStore.getTodayProtein();
+    const todayFat = appStore.getTodayFat ? appStore.getTodayFat() : 0;
+    const todayCalories = appStore.getTodayCalories ? appStore.getTodayCalories() : 0;
     const todayGL = appStore.getTodayGlycemicLoad();
-    const carbsTarget = appStore.state.user.carbsDailyTarget || 120;
-    const proteinTarget = appStore.state.user.proteinDailyTarget || 80;
+    const carbsTarget = appStore.state.user.carbsDailyTarget || 150;
+    const proteinTarget = appStore.state.user.proteinDailyTarget || 150;
+    const fatTarget = appStore.state.user.fatDailyTarget || 80;
+    const caloriesTarget = appStore.state.user.caloriesDailyTarget || 1950;
     const carbsPct = Math.min(100, Math.round((todayNetCarbs / carbsTarget) * 100));
     const proteinPct = Math.min(100, Math.round((todayProtein / proteinTarget) * 100));
+    const fatPct = Math.min(100, Math.round((todayFat / fatTarget) * 100));
+    const calPct = Math.min(100, Math.round((todayCalories / caloriesTarget) * 100));
 
     // Évaluation en direct de l'assiette en cours
     const plateEval = MetabolicEngine.evaluatePlate(this.currentPlateItems);
@@ -54,16 +60,16 @@ export class NutritionView {
         </div>
 
         <div class="macros-grid">
-          <!-- Glucides Nets -->
+          <!-- Calories -->
           <div class="macro-box">
             <div class="macro-label-row">
-              <span class="macro-name">Glucides Nets</span>
-              <span class="macro-val"><strong>${Math.round(todayNetCarbs)}g</strong> / ${carbsTarget}g</span>
+              <span class="macro-name">Calories</span>
+              <span class="macro-val"><strong>${Math.round(todayCalories)}</strong> / ${caloriesTarget} kcal</span>
             </div>
             <div class="progress-track">
-              <div class="progress-bar ${carbsPct > 100 ? 'bar-danger' : (carbsPct > 80 ? 'bar-warning' : 'bar-primary')}" style="width: ${carbsPct}%;"></div>
+              <div class="progress-bar ${calPct > 100 ? 'bar-warning' : 'bar-primary'}" style="width: ${calPct}%;"></div>
             </div>
-            <span class="macro-hint">${carbsPct}% de la limite quotidienne</span>
+            <span class="macro-hint">${calPct}% de la cible (~1920-2000 kcal)</span>
           </div>
 
           <!-- Protéines -->
@@ -75,7 +81,31 @@ export class NutritionView {
             <div class="progress-track">
               <div class="progress-bar bar-emerald" style="width: ${proteinPct}%;"></div>
             </div>
-            <span class="macro-hint">${proteinPct}% de l'objectif anabolique</span>
+            <span class="macro-hint">${proteinPct}% de l'objectif anabolique (150g)</span>
+          </div>
+
+          <!-- Glucides Nets -->
+          <div class="macro-box">
+            <div class="macro-label-row">
+              <span class="macro-name">Glucides Nets</span>
+              <span class="macro-val"><strong>${Math.round(todayNetCarbs)}g</strong> / ${carbsTarget}g</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-bar ${carbsPct > 100 ? 'bar-danger' : (carbsPct > 80 ? 'bar-warning' : 'bar-primary')}" style="width: ${carbsPct}%;"></div>
+            </div>
+            <span class="macro-hint">${carbsPct}% du plafond (≤150g)</span>
+          </div>
+
+          <!-- Lipides -->
+          <div class="macro-box">
+            <div class="macro-label-row">
+              <span class="macro-name">Lipides</span>
+              <span class="macro-val"><strong>${Math.round(todayFat)}g</strong> / ${fatTarget}g</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-bar bar-amber" style="width: ${fatPct}%;"></div>
+            </div>
+            <span class="macro-hint">${fatPct}% de la cible hormonale (80g)</span>
           </div>
         </div>
 
@@ -96,7 +126,7 @@ export class NutritionView {
         <div class="section-header-flex">
           <div>
             <h2 class="section-title">Composez votre Assiette</h2>
-            <p class="section-subtitle">Calculez les glucides nets, l'indice d'amorti et la charge glycémique.</p>
+            <p class="section-subtitle">Calculez les calories, glucides nets, protéines, lipides et score d'amorti.</p>
           </div>
           <div class="meal-type-selector">
             ${['Déjeuner', 'Collation', 'Dîner'].map(type => `
@@ -109,13 +139,13 @@ export class NutritionView {
 
         <!-- RACCOURCIS PLATS TYPES DU MAROC -->
         <div class="preset-plates-scroll">
-          <span class="preset-label">Idées Express :</span>
+          <span class="preset-label">Protocole 85 kg (18-6) :</span>
+          <button class="preset-btn" data-preset="jeune_10h">🍳 Repas 1 (10h) Rupture [40%]</button>
+          <button class="preset-btn" data-preset="jeune_15h_poulet">🍗 Repas 2 (15h) Poulet [60%]</button>
+          <button class="preset-btn" data-preset="jeune_15h_sardine">🐟 Repas 2 (15h) Sardines [60%]</button>
+          <button class="preset-btn" data-preset="jeune_15h_kefta">🥩 Repas 2 (15h) Kefta [60%]</button>
           <button class="preset-btn" data-preset="tajine_khobz">🥘 Tajine & Khobz</button>
-          <button class="preset-btn" data-preset="jeune_10h">🍳 Oufs & Jben Beldi</button>
-          <button class="preset-btn" data-preset="jeune_15h_poulet">🍗 Poulet & Salade</button>
           <button class="preset-btn" data-preset="couscous_royal">🍲 Couscous 7 Légumes</button>
-          <button class="preset-btn" data-preset="ftour_marocain">🥞 Ftour Beldi</button>
-          <button class="preset-btn" data-preset="harira_chebakia">🥣 Harira & Datte</button>
         </div>
 
         <!-- LISTE DES ALIMENTS DANS L'ASSIETTE -->

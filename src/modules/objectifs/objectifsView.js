@@ -147,35 +147,130 @@ export class ObjectifsView {
               <div class="obj-header-meta">
                 <span class="obj-badge-icon">🥗</span>
                 <div>
-                  <span class="pillar-label">PILIER 2 : NUTRITION &amp; GLYCÉMIE</span>
-                  <h3 class="obj-title">Glucides Nets ≤ ${profile.targetCarbs}g &amp; Protéines ≥ ${profile.targetProtein}g</h3>
+                  <span class="pillar-label">PILIER 2 : NUTRITION &amp; MACRONUTRIMENTS (85 KG / 18-6)</span>
+                  <h3 class="obj-title">150g Prot • 150g Gluc • 80g Lip (~1920-2000 kcal)</h3>
                 </div>
               </div>
               <span class="accomplished-badge ${items[1].isAccomplished ? 'badge-success' : 'badge-danger'}">
-                ${items[1].isAccomplished ? 'Accompli (Sous le plafond) ✓' : 'Plafond Dépassé ⚠️'}
+                ${items[1].isAccomplished ? 'Sous le plafond glucidique ✓' : 'Plafond Dépassé ⚠️'}
               </span>
             </div>
 
             <div class="objective-card-content">
               <div class="rule-box">
-                <span class="rule-title">Règle d'accomplissement :</span>
-                <p>Ne pas dépasser le plafond de ${profile.targetCarbs}g de glucides nets sur la journée pour préserver la sensibilité à l'insuline, tout en visant ${profile.targetProtein}g de protéines pour le maintien musculaire.</p>
+                <span class="rule-title">Protocole Nutritionnel 85 kg (18-6) :</span>
+                <p>Apport énergétique total de <strong>~1920 à 2000 kcal</strong>, réparti en <strong>150g de protéines</strong> (synthèse musculaire & satiété), <strong>150g de glucides nets max</strong> (recharge glycogénique sans pic d'insuline) et <strong>80g de lipides</strong> (équilibre hormonal & oméga-3).</p>
               </div>
 
-              <div class="live-progress-section">
-                <div class="progress-labels-row">
-                  <span>Consommé aujourd'hui : <strong>${sources.glucoCarb.todayNetCarbs}g</strong> / ${profile.targetCarbs}g</span>
-                  <span>Consommation : <strong>${Math.round((sources.glucoCarb.todayNetCarbs / profile.targetCarbs) * 100)}%</strong></span>
+              <!-- LES 4 JAUGES DE MACRONUTRIMENTS DU PROTOCOLE -->
+              <div class="macros-grid-progress">
+                <div class="macro-prog-box">
+                  <div class="mp-head">
+                    <span class="mp-title">⚡ Calories</span>
+                    <strong class="mp-val">${sources.glucoCarb.todayCalories || 0} / 1950 kcal</strong>
+                  </div>
+                  <div class="mp-track">
+                    <div class="mp-fill fill-cal" style="width: ${Math.min(100, Math.round(((sources.glucoCarb.todayCalories || 0) / 1950) * 100))}%;"></div>
+                  </div>
+                  <span class="mp-sub">Cible : ~1920 - 2000 kcal</span>
                 </div>
-                <div class="progress-track-lg">
-                  <div class="progress-bar-lg ${sources.glucoCarb.todayNetCarbs <= profile.targetCarbs ? 'bar-nutrition' : 'bar-danger'}" style="width: ${Math.min(100, Math.round((sources.glucoCarb.todayNetCarbs / profile.targetCarbs) * 100))}%;"></div>
+
+                <div class="macro-prog-box">
+                  <div class="mp-head">
+                    <span class="mp-title">🥩 Protéines</span>
+                    <strong class="mp-val">${sources.glucoCarb.todayProtein}g / ${profile.targetProtein || 150}g</strong>
+                  </div>
+                  <div class="mp-track">
+                    <div class="mp-fill fill-prot" style="width: ${Math.min(100, Math.round((sources.glucoCarb.todayProtein / (profile.targetProtein || 150)) * 100))}%;"></div>
+                  </div>
+                  <span class="mp-sub">Objectif : 150g</span>
                 </div>
-                <div class="obj-details-note">
-                  ${sources.glucoCarb.todayNetCarbs <= profile.targetCarbs
-                    ? `Il vous reste encore <strong>${Math.round(profile.targetCarbs - sources.glucoCarb.todayNetCarbs)}g</strong> de marge glucidique pour aujourd'hui.`
-                    : `Dépassement de <strong>${Math.round(sources.glucoCarb.todayNetCarbs - profile.targetCarbs)}g</strong>.`
-                  }
-                  Protéines absorbées : <strong>${sources.glucoCarb.todayProtein}g</strong> / ${profile.targetProtein}g.
+
+                <div class="macro-prog-box">
+                  <div class="mp-head">
+                    <span class="mp-title">🥖 Glucides Nets</span>
+                    <strong class="mp-val">${sources.glucoCarb.todayNetCarbs}g / ${profile.targetCarbs || 150}g</strong>
+                  </div>
+                  <div class="mp-track">
+                    <div class="mp-fill ${sources.glucoCarb.todayNetCarbs <= (profile.targetCarbs || 150) ? 'fill-carbs' : 'fill-danger'}" style="width: ${Math.min(100, Math.round((sources.glucoCarb.todayNetCarbs / (profile.targetCarbs || 150)) * 100))}%;"></div>
+                  </div>
+                  <span class="mp-sub">Plafond : ≤ 150g</span>
+                </div>
+
+                <div class="macro-prog-box">
+                  <div class="mp-head">
+                    <span class="mp-title">🫒 Lipides</span>
+                    <strong class="mp-val">${sources.glucoCarb.todayFat || 0}g / ${profile.targetFat || 80}g</strong>
+                  </div>
+                  <div class="mp-track">
+                    <div class="mp-fill fill-fat" style="width: ${Math.min(100, Math.round(((sources.glucoCarb.todayFat || 0) / (profile.targetFat || 80)) * 100))}%;"></div>
+                  </div>
+                  <span class="mp-sub">Cible : 80g</span>
+                </div>
+              </div>
+
+              <!-- RÉPARTITION DES 2 REPAS (10H00 [40%] & 15H00 [60%]) -->
+              <div class="protocol-meals-split-cards">
+                <div class="split-meal-card ${sources.glucoCarb.protocol186?.repas1?.actual?.logged ? 'card-logged' : 'card-waiting'}">
+                  <div class="sm-card-head">
+                    <div class="sm-title-row">
+                      <span class="sm-icon">🍳</span>
+                      <div>
+                        <strong class="sm-name">REPAS 1 (10H00) - RUPTURE DU JEÛNE [40%]</strong>
+                        <span class="sm-timing">Prise optimale : 10h00 (Fenêtre 09h-12h)</span>
+                      </div>
+                    </div>
+                    <span class="sm-status-badge ${sources.glucoCarb.protocol186?.repas1?.actual?.logged ? 'badge-success' : 'badge-pending'}">
+                      ${sources.glucoCarb.protocol186?.repas1?.actual?.logged ? 'Journalisé ✓' : 'À prendre à 10h00'}
+                    </span>
+                  </div>
+                  <div class="sm-target-macros-row">
+                    <span class="target-tag">Cible [40%] :</span>
+                    <span class="macro-pill mp-cal">~770 kcal</span>
+                    <span class="macro-pill mp-p">60g Prot</span>
+                    <span class="macro-pill mp-g">60g Gluc</span>
+                    <span class="macro-pill mp-l">32g Lip</span>
+                  </div>
+                  ${sources.glucoCarb.protocol186?.repas1?.actual?.logged ? `
+                    <div class="sm-actual-row">
+                      <span>Relevé : <strong>${sources.glucoCarb.protocol186.repas1.actual.title}</strong> (${sources.glucoCarb.protocol186.repas1.actual.calories} kcal • ${sources.glucoCarb.protocol186.repas1.actual.protein}g P • ${sources.glucoCarb.protocol186.repas1.actual.carbs}g G • ${sources.glucoCarb.protocol186.repas1.actual.fat}g L)</span>
+                    </div>
+                  ` : `
+                    <div class="sm-preset-hint">
+                      💡 <em>Exemple Rupture : 3 Œufs au plat + 165g Pain complet graines + 65g Jben Beldi & Huile d'olive.</em>
+                    </div>
+                  `}
+                </div>
+
+                <div class="split-meal-card ${sources.glucoCarb.protocol186?.repas2?.actual?.logged ? 'card-logged' : 'card-waiting'}">
+                  <div class="sm-card-head">
+                    <div class="sm-title-row">
+                      <span class="sm-icon">🍗</span>
+                      <div>
+                        <strong class="sm-name">REPAS 2 (15H00) - CLÔTURE DU JEÛNE [60%]</strong>
+                        <span class="sm-timing">Prise optimale : 14h30 - 15h00 (Avant fermeture 15h00)</span>
+                      </div>
+                    </div>
+                    <span class="sm-status-badge ${sources.glucoCarb.protocol186?.repas2?.actual?.logged ? 'badge-success' : 'badge-pending'}">
+                      ${sources.glucoCarb.protocol186?.repas2?.actual?.logged ? 'Journalisé ✓' : 'À prendre à 15h00'}
+                    </span>
+                  </div>
+                  <div class="sm-target-macros-row">
+                    <span class="target-tag">Cible [60%] :</span>
+                    <span class="macro-pill mp-cal">~1150 kcal</span>
+                    <span class="macro-pill mp-p">90g Prot</span>
+                    <span class="macro-pill mp-g">90g Gluc</span>
+                    <span class="macro-pill mp-l">48g Lip</span>
+                  </div>
+                  ${sources.glucoCarb.protocol186?.repas2?.actual?.logged ? `
+                    <div class="sm-actual-row">
+                      <span>Relevé : <strong>${sources.glucoCarb.protocol186.repas2.actual.title}</strong> (${sources.glucoCarb.protocol186.repas2.actual.calories} kcal • ${sources.glucoCarb.protocol186.repas2.actual.protein}g P • ${sources.glucoCarb.protocol186.repas2.actual.carbs}g G • ${sources.glucoCarb.protocol186.repas2.actual.fat}g L)</span>
+                    </div>
+                  ` : `
+                    <div class="sm-preset-hint">
+                      💡 <em>Exemple Clôture : 270g Poulet grillé (ou 320g Sardines) + 235g Khobz complet + Salade marocaine + 23g Huile d'olive.</em>
+                    </div>
+                  `}
                 </div>
               </div>
 

@@ -108,6 +108,7 @@ export class CrossView {
             ${glucoCarb.todayMeals.length > 0 ? glucoCarb.todayMeals.map(meal => {
               const hour = new Date(meal.timestamp || Date.now()).getHours();
               const isValid = (hour >= 9 && hour < 15);
+              const cal = meal.calories || Math.round((Number(meal.proteins_g || 0)*4) + (Number(meal.net_carbs_g || 0)*4) + (Number(meal.fat_g || 0)*9));
               return `
                 <div class="meal-timing-row ${isValid ? 'timing-valid' : 'timing-invalid'}">
                   <span class="timing-badge ${isValid ? 'badge-good' : 'badge-danger'}">
@@ -115,7 +116,7 @@ export class CrossView {
                   </span>
                   <div class="timing-meal-info">
                     <strong>${meal.title || 'Repas synchronisé'} (${meal.timeFormatted || '10:29'})</strong>
-                    <span>${meal.net_carbs_g || 45.2}g glucides nets • ${meal.proteins_g || 19.7}g protéines • GL ${meal.glycemic_load || 27.1}</span>
+                    <span>~${cal} kcal • ${meal.net_carbs_g || meal.netCarbs || 0}g glucides • ${meal.proteins_g || meal.protein || 0}g protéines • ${meal.fat_g || meal.fat || 0}g lipides</span>
                   </div>
                   <span class="timing-hour-pill">${meal.timeFormatted || '10:29'}</span>
                 </div>
@@ -127,11 +128,50 @@ export class CrossView {
             `}
           </div>
 
+          <!-- RÉPARTITION COMPARATIVE DES 2 REPAS (10H [40%] & 15H [60%]) -->
+          <div class="cross-meals-protocol-grid">
+            <div class="cross-meal-box ${glucoCarb.protocol186?.repas1?.actual?.logged ? 'cmb-done' : 'cmb-pending'}">
+              <div class="cmb-head">
+                <span class="cmb-icon">🍳</span>
+                <div>
+                  <strong>Repas 1 (10h00) Rupture [40%]</strong>
+                  <span class="cmb-timing">Fenêtre : 09h00 - 12h00</span>
+                </div>
+              </div>
+              <div class="cmb-macros">
+                <span>Cible : <strong>~770 kcal</strong> • 60g P • 60g G • 32g L</span>
+              </div>
+              <div class="cmb-status">
+                ${glucoCarb.protocol186?.repas1?.actual?.logged
+                  ? `✓ Relevé : ${glucoCarb.protocol186.repas1.actual.title} (~${glucoCarb.protocol186.repas1.actual.calories} kcal • ${glucoCarb.protocol186.repas1.actual.protein}g P • ${glucoCarb.protocol186.repas1.actual.carbs}g G • ${glucoCarb.protocol186.repas1.actual.fat}g L)`
+                  : '⏳ En attente de saisie dans Gluco-Carb Maroc'}
+              </div>
+            </div>
+
+            <div class="cross-meal-box ${glucoCarb.protocol186?.repas2?.actual?.logged ? 'cmb-done' : 'cmb-pending'}">
+              <div class="cmb-head">
+                <span class="cmb-icon">🍗</span>
+                <div>
+                  <strong>Repas 2 (15h00) Clôture [60%]</strong>
+                  <span class="cmb-timing">Fenêtre : 13h00 - 15h00</span>
+                </div>
+              </div>
+              <div class="cmb-macros">
+                <span>Cible : <strong>~1150 kcal</strong> • 90g P • 90g G • 48g L</span>
+              </div>
+              <div class="cmb-status">
+                ${glucoCarb.protocol186?.repas2?.actual?.logged
+                  ? `✓ Relevé : ${glucoCarb.protocol186.repas2.actual.title} (~${glucoCarb.protocol186.repas2.actual.calories} kcal • ${glucoCarb.protocol186.repas2.actual.protein}g P • ${glucoCarb.protocol186.repas2.actual.carbs}g G • ${glucoCarb.protocol186.repas2.actual.fat}g L)`
+                  : '⏳ En attente de saisie dans Gluco-Carb Maroc'}
+              </div>
+            </div>
+          </div>
+
           <div class="cross-conclusion-box">
             <strong>Verdict Chronobiologique :</strong>
             <p>
               ${glucoCarb.todayMeals.length > 0
-                ? 'Excellent alignement : votre prise alimentaire est survenue à 10:29, en plein cœur de la fenêtre d\'assimilation 09h-15h. L\'insuline a le temps de redescendre avant le démarrage du jeûne à 15h00.'
+                ? 'Excellent alignement : vos apports alimentaires sont synchronisés avec la fenêtre d\'assimilation 09h-15h. L\'insuline a le temps de redescendre avant le démarrage du jeûne à 15h00.'
                 : 'Pensez à consigner vos repas dans Gluco-Carb Maroc avant 15h00 afin de ne pas interrompre votre cycle d\'autophagie.'
               }
             </p>
@@ -188,28 +228,34 @@ export class CrossView {
 
           <div class="glycogen-stats-grid">
             <div class="glyco-stat-card">
-              <span class="g-title">Glucides Nets Aujourd'hui</span>
+              <span class="g-title">Calories Consommées</span>
+              <strong class="g-num">${glucoCarb.todayCalories || 0} kcal</strong>
+              <span class="g-sub">Cible : ~1920-2000 kcal</span>
+            </div>
+
+            <div class="glyco-stat-card">
+              <span class="g-title">Glucides Nets Relevés</span>
               <strong class="g-num">${glucoCarb.todayNetCarbs} g</strong>
-              <span class="g-sub">Plafond : ${profile.targetCarbs} g</span>
+              <span class="g-sub">Plafond : ≤ ${profile.targetCarbs || 150} g</span>
             </div>
 
             <div class="glyco-stat-card">
-              <span class="g-title">Charge Glycémique Globale</span>
-              <strong class="g-num">${glucoCarb.todayGL}</strong>
-              <span class="g-sub">Impact modéré sur l'insuline</span>
+              <span class="g-title">Lipides Essentiels</span>
+              <strong class="g-num">${glucoCarb.todayFat || 0} g</strong>
+              <span class="g-sub">Cible : 80 g</span>
             </div>
 
             <div class="glyco-stat-card">
-              <span class="g-title">Calories Brûlées Cumulées</span>
+              <span class="g-title">Calories Sport Brûlées</span>
               <strong class="g-num">${crossAnalytics.totalCaloriesEstimatedBurned} kcal</strong>
-              <span class="g-sub">24 séances Workout Home</span>
+              <span class="g-sub">Workout Home cumulé</span>
             </div>
           </div>
 
           <div class="cross-conclusion-box">
-            <strong>Bilan Énergétique :</strong>
+            <strong>Bilan Énergétique Global (85 kg / 18-6) :</strong>
             <p>
-              Avec ${glucoCarb.todayNetCarbs}g de glucides nets consommés pour un plafond de ${profile.targetCarbs}g, vos réserves de glycogène sont reconstituées sans provoquer de débordement vers le stockage sous forme de triglycérides.
+              Avec ${glucoCarb.todayCalories || 0} kcal ingérées (sur la cible ~1920-2000 kcal) et ${glucoCarb.todayNetCarbs}g de glucides nets pour un plafond de ${profile.targetCarbs || 150}g, vos réserves de glycogène sont idéalement rechargées sans provoquer de stockage adipeux pendant le jeûne de 18 heures.
             </p>
           </div>
         </div>

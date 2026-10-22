@@ -245,13 +245,13 @@ export class HistoriqueView {
    * Rendu du Mode 1 : Courbes & Graphiques Interactifs
    */
   renderCurvesSection(timeline, profile) {
-    const targetCarbs = profile.targetCarbs || 120;
-    const targetProtein = profile.targetProtein || 80;
+    const targetCarbs = profile.targetCarbs || 150;
+    const targetProtein = profile.targetProtein || 150;
 
     // Données pour Courbe 1 : Glucides & Protéines
     const carbsPoints = timeline.map(d => ({ x: d.date, y: d.netCarbs, label: d.dayLabel }));
     const proteinPoints = timeline.map(d => ({ x: d.date, y: d.protein, label: d.dayLabel }));
-    const maxCarbsScale = Math.max(targetCarbs * 1.2, ...carbsPoints.map(p => p.y), 150);
+    const maxCarbsScale = Math.max(targetCarbs * 1.2, targetProtein * 1.2, ...carbsPoints.map(p => p.y), ...proteinPoints.map(p => p.y), 180);
 
     // Données pour Courbe 2 : Calories Brûlées & Durée de Sport
     const calPoints = timeline.map(d => ({ x: d.date, y: d.caloriesBurned, label: d.dayLabel }));
@@ -276,15 +276,19 @@ export class HistoriqueView {
             <div class="chart-legend-row">
               <span class="legend-item"><span class="legend-color color-carbs"></span> Glucides nets</span>
               <span class="legend-item"><span class="legend-color color-target"></span> Plafond (${targetCarbs}g)</span>
-              <span class="legend-item"><span class="legend-color color-protein"></span> Protéines</span>
+              <span class="legend-item"><span class="legend-color color-protein"></span> Protéines (${targetProtein}g)</span>
             </div>
           </div>
 
           <div class="svg-chart-wrapper">
             <svg class="interactive-curve-svg" viewBox="0 0 600 220" preserveAspectRatio="none">
-              <!-- Ligne de grille horizontale Plafond -->
+              <!-- Ligne de grille horizontale Plafond Glucides -->
               <line x1="30" y1="${220 - 30 - ((targetCarbs / maxCarbsScale) * 160)}" x2="570" y2="${220 - 30 - ((targetCarbs / maxCarbsScale) * 160)}" stroke="#f43f5e" stroke-dasharray="4,4" stroke-width="1.8" />
               <text x="565" y="${220 - 34 - ((targetCarbs / maxCarbsScale) * 160)}" fill="#f43f5e" font-size="10" text-anchor="end" font-family="monospace">Plafond ${targetCarbs}g</text>
+
+              <!-- Ligne de repère horizontale Cible Protéines -->
+              <line x1="30" y1="${220 - 30 - ((targetProtein / maxCarbsScale) * 160)}" x2="570" y2="${220 - 30 - ((targetProtein / maxCarbsScale) * 160)}" stroke="#38bdf8" stroke-dasharray="3,3" stroke-width="1.4" opacity="0.8" />
+              <text x="70" y="${220 - 34 - ((targetProtein / maxCarbsScale) * 160)}" fill="#38bdf8" font-size="10" text-anchor="start" font-family="monospace">Cible Prot. ${targetProtein}g</text>
 
               <!-- Tracé des Glucides -->
               ${this.renderSvgLine(carbsPoints, maxCarbsScale, '#10b981', 'rgba(16, 185, 129, 0.15)')}
@@ -460,8 +464,10 @@ export class HistoriqueView {
                   <p class="diapo-item-sub">${m.itemsDescription}</p>
 
                   <div class="diapo-macros-bar">
+                    <span class="macro-cell">⚡ Calories : <strong>${m.calories || Math.round((m.protein * 4) + (m.netCarbs * 4) + ((m.fat || 0) * 9))} kcal</strong></span>
                     <span class="macro-cell">🥖 Glucides : <strong>${m.netCarbs}g</strong></span>
-                    <span class="macro-cell">🍗 Protéines : <strong>${m.protein}g</strong></span>
+                    <span class="macro-cell">🥩 Protéines : <strong>${m.protein}g</strong></span>
+                    <span class="macro-cell">🫒 Lipides : <strong>${m.fat || 0}g</strong></span>
                     <span class="macro-cell">📈 Charge Glyc. : <strong>${m.glycemicLoad}</strong></span>
                   </div>
                 </div>
@@ -552,7 +558,8 @@ export class HistoriqueView {
                 <thead>
                   <tr>
                     <th>Date</th>
-                    <th>Glucides Nets (≤120g)</th>
+                    <th>Glucides Nets (≤150g)</th>
+                    <th>Protéines (≥150g)</th>
                     <th>Sport (Workout Home)</th>
                     <th>Jeûne (18/6)</th>
                     <th>Objectifs Validés</th>
@@ -564,6 +571,9 @@ export class HistoriqueView {
                       <td class="td-date"><strong>${d.date}</strong></td>
                       <td class="${d.carbsOk ? 'td-ok' : 'td-alert'}">
                         ${d.netCarbs}g ${d.carbsOk ? '✓' : '⚠️'}
+                      </td>
+                      <td class="${d.protein >= 150 ? 'td-ok' : 'td-muted'}">
+                        ${d.protein}g / 150g
                       </td>
                       <td class="${d.workoutOk ? 'td-ok' : 'td-muted'}">
                         ${d.workoutOk ? `${d.caloriesBurned} kcal (${d.workoutCount} séance)` : '0 séance'}

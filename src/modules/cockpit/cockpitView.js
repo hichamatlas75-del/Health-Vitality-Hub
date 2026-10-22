@@ -113,7 +113,7 @@ export class CockpitView {
 
           <h1 class="cockpit-main-title">Cockpit Santé &amp; Vitalité</h1>
           <p class="cockpit-subtitle">
-            Profil actif : <strong>${displayName || 'Hicham'}</strong> (${profile.weight} kg, ${profile.height} cm)
+            Profil actif : <strong>${displayName || 'Hicham'}</strong> (${profile.weight || 85} kg, ${profile.height || 183} cm) — <em>Protocole 85 kg (18-6) : ~1920-2000 kcal</em>
           </p>
         </div>
 
@@ -245,19 +245,38 @@ export class CockpitView {
           <div class="stream-card-body">
             <div class="carbs-highlight-row">
               <div class="big-carbs-val">
-                ${glucoCarb.todayNetCarbs} <span class="val-unit">g</span>
+                ${glucoCarb.todayCalories || 0} <span class="val-unit">kcal</span>
               </div>
               <div class="carbs-quota-info">
-                <span>Glucides nets du jour</span>
+                <span>Énergie du jour (~1920-2000 kcal)</span>
                 <span class="quota-badge ${glucoCarb.todayNetCarbs <= profile.targetCarbs ? 'badge-good' : 'badge-alert'}">
-                  Plafond : ${profile.targetCarbs}g (${Math.round((glucoCarb.todayNetCarbs / profile.targetCarbs) * 100)}%)
+                  Glucides : ${glucoCarb.todayNetCarbs}g / ${profile.targetCarbs}g (${Math.round((glucoCarb.todayNetCarbs / profile.targetCarbs) * 100)}%)
                 </span>
               </div>
             </div>
 
             <div class="macro-chips-row">
-              <span class="macro-chip">🍗 Protéines : <strong>${glucoCarb.todayProtein}g</strong> / ${profile.targetProtein}g</span>
-              <span class="macro-chip">📈 Charge Glycémique : <strong>${glucoCarb.todayGL}</strong></span>
+              <span class="macro-chip">🥩 Protéines : <strong>${glucoCarb.todayProtein}g</strong> / ${profile.targetProtein}g</span>
+              <span class="macro-chip">🥖 Glucides : <strong>${glucoCarb.todayNetCarbs}g</strong> / ${profile.targetCarbs}g</span>
+              <span class="macro-chip">🫒 Lipides : <strong>${glucoCarb.todayFat || 0}g</strong> / ${profile.targetFat || 80}g</span>
+            </div>
+
+            <!-- Protocole 2 Repas 18/6 (10h & 15h) -->
+            <div class="cockpit-meals-protocol-box">
+              <div class="cockpit-meal-row ${glucoCarb.protocol186?.repas1?.actual?.logged ? 'meal-done' : 'meal-pending'}">
+                <span class="cm-title">🍳 Repas 1 (10h00) Rupture [40%] :</span>
+                <span class="cm-macros">~770 kcal • 60g P • 60g G • 32g L</span>
+                <span class="cm-badge ${glucoCarb.protocol186?.repas1?.actual?.logged ? 'badge-success' : 'badge-pending'}">
+                  ${glucoCarb.protocol186?.repas1?.actual?.logged ? 'Validé ✓' : '10h00 ⏳'}
+                </span>
+              </div>
+              <div class="cockpit-meal-row ${glucoCarb.protocol186?.repas2?.actual?.logged ? 'meal-done' : 'meal-pending'}">
+                <span class="cm-title">🍗 Repas 2 (15h00) Clôture [60%] :</span>
+                <span class="cm-macros">~1150 kcal • 90g P • 90g G • 48g L</span>
+                <span class="cm-badge ${glucoCarb.protocol186?.repas2?.actual?.logged ? 'badge-success' : 'badge-pending'}">
+                  ${glucoCarb.protocol186?.repas2?.actual?.logged ? 'Validé ✓' : '15h00 ⏳'}
+                </span>
+              </div>
             </div>
 
             ${glucoCarb.todayMeals.length > 0 ? `

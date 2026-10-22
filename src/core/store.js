@@ -7,12 +7,14 @@ const STORAGE_KEY = 'health_vitality_hub_data_v1';
 
 const DEFAULT_STATE = {
   user: {
-    name: 'Champion(ne)',
-    weight: 72,
-    height: 175,
-    carbsDailyTarget: 120, // grammes de glucides nets par jour
-    proteinDailyTarget: 80, // grammes de protéines par jour
-    fastingPlan: 'PLAN_16_8',
+    name: 'Hicham',
+    weight: 85,
+    height: 183,
+    carbsDailyTarget: 150, // 150g glucides nets max par jour (85 kg / 18-6)
+    proteinDailyTarget: 150, // 150g protéines par jour (85 kg / 18-6)
+    fatDailyTarget: 80, // 80g lipides par jour (85 kg / 18-6)
+    caloriesDailyTarget: 1950, // ~1920 - 2000 kcal par jour
+    fastingPlan: 'PLAN_18_6',
     workoutLevel: 'intermediate',
     soundEnabled: true,
     voiceEnabled: true,
@@ -104,7 +106,9 @@ class Store {
           date: this.state.nutrition.todayDate,
           meals: [...this.state.nutrition.todayMeals],
           totalNetCarbs: this.getTodayNetCarbs(),
-          totalProtein: this.getTodayProtein()
+          totalProtein: this.getTodayProtein(),
+          totalFat: this.getTodayFat(),
+          totalCalories: this.getTodayCalories()
         });
       }
       this.state.nutrition.todayDate = today;
@@ -199,6 +203,16 @@ class Store {
     return meals.reduce((sum, m) => sum + (Number(m.totalProtein) || 0), 0);
   }
 
+  getTodayFat() {
+    const meals = this.getTodayMeals();
+    return meals.reduce((sum, m) => sum + (Number(m.totalFat || m.fat || m.fat_g || m.lipides) || 0), 0);
+  }
+
+  getTodayCalories() {
+    const meals = this.getTodayMeals();
+    return meals.reduce((sum, m) => sum + (Number(m.totalCalories || m.calories || m.kcal) || 0), 0);
+  }
+
   getTodayGlycemicLoad() {
     const meals = this.getTodayMeals();
     return meals.reduce((sum, m) => sum + (Number(m.totalGL) || 0), 0);
@@ -216,6 +230,8 @@ class Store {
       totalGrams: meal.totalGrams || 0,
       totalNetCarbs: Math.round((meal.totalNetCarbs || 0) * 10) / 10,
       totalProtein: Math.round((meal.totalProtein || 0) * 10) / 10,
+      totalFat: Math.round((meal.totalFat || meal.fat || 0) * 10) / 10,
+      totalCalories: Math.round(meal.totalCalories || meal.calories || ((meal.totalProtein || 0) * 4 + (meal.totalNetCarbs || 0) * 4 + (meal.totalFat || 0) * 9)),
       totalFiber: Math.round((meal.totalFiber || 0) * 10) / 10,
       totalGL: Math.round((meal.totalGL || 0) * 10) / 10,
       amortiScore: meal.amortiScore || 'normal'

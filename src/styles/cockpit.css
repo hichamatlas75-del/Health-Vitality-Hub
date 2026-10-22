@@ -1914,3 +1914,255 @@
 .score-2 { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4); }
 .score-1 { background: rgba(244, 63, 94, 0.2); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.4); }
 
+/* ==========================================================================
+   PROTOCOLE 85 KG (18-6) : MACROS, REPAS 1 (10H [40%]) & REPAS 2 (15H [60%])
+   ========================================================================== */
+
+/* Mini box dans le cockpit */
+.cockpit-meals-protocol-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 10px 0;
+}
+
+.cockpit-meal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.74rem;
+}
+
+.cockpit-meal-row .cm-title {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.cockpit-meal-row .cm-macros {
+  font-family: var(--font-mono);
+  color: #fbbf24;
+  font-size: 0.7rem;
+}
+
+.cockpit-meal-row .cm-badge {
+  font-size: 0.68rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+/* Grille des 4 jauges de macronutriments (Objectifs) */
+.macros-grid-progress {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.macro-prog-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mp-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.74rem;
+}
+
+.mp-title {
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.mp-val {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  color: var(--text-main);
+  font-size: 0.75rem;
+}
+
+.mp-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mp-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.fill-cal { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+.fill-prot { background: linear-gradient(90deg, #0284c7, #38bdf8); }
+.fill-carbs { background: linear-gradient(90deg, #059669, #10b981); }
+.fill-fat { background: linear-gradient(90deg, #d97706, #f59e0b); }
+.fill-danger { background: #f43f5e; }
+
+.mp-sub {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+/* Fiches Répartition des 2 Repas (Objectifs) */
+.protocol-meals-split-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.split-meal-card {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.split-meal-card.card-logged {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(6, 78, 59, 0.15);
+}
+
+.sm-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.sm-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sm-icon {
+  font-size: 1.25rem;
+}
+
+.sm-name {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--text-main);
+  display: block;
+}
+
+.sm-timing {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.sm-status-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.sm-target-macros-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+}
+
+.target-tag {
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.macro-pill {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+}
+
+.mp-cal { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+.mp-p { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+.mp-g { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+.mp-l { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+.sm-actual-row {
+  font-size: 0.75rem;
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.sm-preset-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* Grille Croisement des 2 Repas */
+.cross-meals-protocol-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.cross-meal-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cross-meal-box.cmb-done {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.cmb-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cmb-icon {
+  font-size: 1.25rem;
+}
+
+.cmb-timing {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  display: block;
+}
+
+.cmb-macros {
+  font-size: 0.75rem;
+  color: #fbbf24;
+}
+
+.cmb-status {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+

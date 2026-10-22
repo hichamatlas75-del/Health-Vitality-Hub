@@ -357,6 +357,7 @@ button {
 
 .bar-primary { background: linear-gradient(90deg, #10b981, #06b6d4); }
 .bar-emerald { background: #10b981; }
+.bar-amber { background: #f59e0b; }
 .bar-orange  { background: linear-gradient(90deg, #f59e0b, #fb923c); }
 .bar-warning { background: #f59e0b; }
 .bar-danger  { background: #f43f5e; }

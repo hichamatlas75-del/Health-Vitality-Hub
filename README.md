@@ -12,14 +12,16 @@ Application PWA unifiée de **pilotage exécutif, lecture passive et analyse cro
 Conformément à la stratégie d'architecture, cette application est un **Tableau de Bord Exécutif (Cockpit)** qui :
 - **Lit en continu les données et performances du profil partagé (`hicham`)** sans modifier les applications mères.
 - **Croise les données (Cross-Analytics)** :
-  - **Timing Repas vs Fenêtre 18/6** : Vérification chronobiologique que chaque repas pris dans *Gluco-Carb Maroc* se situe bien à l'intérieur de la fenêtre autorisée (09h00 - 15h00). Alerte automatique en cas de rupture de jeûne hors-fenêtre.
-  - **Synergie Anabolique (Sport ↔ Protéines)** : Corrélation entre le stimulus musculaire issu de *Workout Home* et le quota de protéines absorbé dans *Gluco-Carb Maroc* (cible 120g).
-  - **Recharge Glycogénique vs Dépense Sportive** : Équilibre entre les glucides nets ingérés (≤ 150g) et les calories dépensées (4 248 kcal cumulées).
+  - **Timing Repas vs Fenêtre 18/6** : Vérification chronobiologique que chaque repas pris dans *Gluco-Carb Maroc* se situe bien à l'intérieur de la fenêtre autorisée (09h00 - 15h00), avec la répartition idéale :
+    - **Repas 1 (10h00) - Rupture du Jeûne [40%]** : ~770 kcal • 60g Protéines • 60g Glucides • 32g Lipides.
+    - **Repas 2 (15h00) - Clôture du Jeûne [60%]** : ~1150 kcal • 90g Protéines • 90g Glucides • 48g Lipides.
+  - **Synergie Anabolique (Sport ↔ Protéines)** : Corrélation entre le stimulus musculaire issu de *Workout Home* et le quota de protéines absorbé dans *Gluco-Carb Maroc* (cible 150g).
+  - **Recharge Glycogénique & Énergie (85 kg)** : Équilibre global : ~1920-2000 kcal, Glucides nets ≤ 150g, Protéines 150g, Lipides 80g.
 - **Définit 3 Objectifs Journaliers et vérifie leur accomplissement en temps réel** :
-  1. ⚡ **Pilier 1 : Jeûne 18/6** (Fenêtre 15h00 - 09h00 respectée).
-  2. 🥗 **Pilier 2 : Glucides Nets ≤ 150g & Protéines ≥ 120g** (Plafond respecté).
+  1. ⚡ **Pilier 1 : Jeûne 18/6** (15h00 - 09h00, validé dès démarrage du chrono à 15h00).
+  2. 🥗 **Pilier 2 : Protocole Nutrition 85 kg (18-6)** (~1920-2000 kcal, 150g Protéines, Glucides nets ≤ 150g, 80g Lipides).
   3. 🏋️ **Pilier 3 : Entraînement Quotidien Full Body 17** (1 séance validée le jour même).
-  - **Score global d'accomplissement** en temps réel (ex: 2/3 Validés, 67%).
+  - **Score global d'accomplissement** en temps réel (ex: 3/3 Validés, 100%).
 
 ---
 
