@@ -1,0 +1,43 @@
+{
+  "name": "Health & Vitality Hub",
+  "short_name": "VitalityHub",
+  "description": "Application unifiée Santé : Jeûne Intermittent, Nutrition & Glucides Marocains, Sport Maison.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "orientation": "portrait-primary",
+  "lang": "fr-FR",
+  "icons": [
+    {
+      "src": "./icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "fitness", "lifestyle", "medical"],
+  "shortcuts": [
+    {
+      "name": "Démarrer le Jeûne",
+      "url": "./index.html#fasting",
+      "description": "Accès direct au suivi de jeûne intermittent"
+    },
+    {
+      "name": "Calculer un Repas",
+      "url": "./index.html#nutrition",
+      "description": "Calculateur de glucides et repas marocains"
+    },
+    {
+      "name": "Séance de Sport",
+      "url": "./index.html#workout",
+      "description": "Entraînement guidé au poids du corps"
+    }
+  ]
+}

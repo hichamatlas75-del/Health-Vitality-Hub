@@ -1,0 +1,278 @@
+/* ==========================================================================
+   Fasting Styles - Health & Vitality Hub
+   ========================================================================== */
+
+/* Carte Timer Central */
+.timer-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.circular-timer-wrap {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  margin-bottom: 20px;
+}
+
+.timer-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.timer-track {
+  fill: none;
+  stroke: var(--bg-card-subtle);
+  stroke-width: 12;
+}
+
+.timer-progress {
+  fill: none;
+  stroke-width: 12;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease, stroke 0.4s ease;
+}
+
+.timer-inner-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.timer-stage-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  margin-bottom: 8px;
+}
+
+.timer-main-digits {
+  font-family: var(--font-mono);
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.timer-subtext {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.timer-controls {
+  width: 100%;
+  max-width: 320px;
+}
+
+.timer-btn-group {
+  display: flex;
+  gap: 10px;
+}
+
+/* Grille des Protocoles */
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.plan-card {
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.plan-card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.plan-card.active {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.plan-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.plan-emoji {
+  font-size: 1.25rem;
+}
+
+.plan-difficulty {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.plan-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.plan-hours {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-cyan);
+  margin-bottom: 6px;
+}
+
+.plan-desc {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+/* Timeline des Étapes Métaboliques */
+.stages-timeline {
+  display: flex;
+  flex-direction: column;
+  margin-top: 14px;
+}
+
+.stage-item {
+  display: flex;
+  gap: 14px;
+  position: relative;
+  padding-bottom: 20px;
+}
+
+.stage-item:last-child {
+  padding-bottom: 0;
+}
+
+.stage-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.stage-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.stage-item.current .stage-dot {
+  background: var(--stage-color);
+  box-shadow: 0 0 16px var(--stage-color);
+  border-color: #ffffff;
+}
+
+.stage-line {
+  flex: 1;
+  width: 2px;
+  background: var(--bg-card-subtle);
+  margin-top: 4px;
+}
+
+.stage-item.passed .stage-line {
+  background: var(--color-primary);
+}
+
+.stage-body {
+  flex: 1;
+}
+
+.stage-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.stage-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.stage-item.current .stage-name {
+  color: var(--stage-color);
+}
+
+.stage-hours {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.stage-short {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.stage-expanded-box {
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--stage-color);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-top: 10px;
+}
+
+.stage-full {
+  font-size: 0.8rem;
+  color: var(--text-main);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.stage-effects {
+  list-style: none;
+  font-size: 0.75rem;
+  color: var(--color-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.stage-tip {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+}

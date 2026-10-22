@@ -1,0 +1,379 @@
+/* ==========================================================================
+   Dashboard Styles - Health & Vitality Hub
+   ========================================================================== */
+
+.dashboard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.user-welcome {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-greeting {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-primary);
+}
+
+.user-name {
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-main);
+  margin-top: 2px;
+}
+
+.dashboard-date {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  margin-top: 2px;
+}
+
+.btn-settings-trigger {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-settings-trigger:hover {
+  color: var(--text-main);
+  background: var(--bg-card-subtle);
+}
+
+/* Vitality Score Card */
+.vitality-score-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 182, 212, 0.08));
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-glow-emerald);
+}
+
+.vitality-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.vitality-badge {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  background: var(--bg-app);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-full);
+  padding: 10px 14px;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+}
+
+.vitality-num {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.vitality-max {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.vitality-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.vitality-title {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text-main);
+}
+
+.vitality-desc {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.vitality-pillars-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot-pillar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  opacity: 0.4;
+  transition: all 0.3s ease;
+}
+
+.dot-pillar.done {
+  opacity: 1;
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+/* Smart Advice Box */
+.smart-advice-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--color-amber);
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
+}
+
+.advice-icon {
+  color: var(--color-amber);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.advice-content strong {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-amber);
+  margin-bottom: 2px;
+}
+
+.advice-content p {
+  font-size: 0.82rem;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+/* Widgets Grid & Cards */
+.widgets-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dashboard-widget-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.dashboard-widget-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.widget-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.widget-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-fasting { background: rgba(245, 158, 11, 0.15); color: var(--color-amber); }
+.icon-nutrition { background: rgba(16, 185, 129, 0.15); color: var(--color-primary); }
+.icon-workout { background: rgba(6, 182, 212, 0.15); color: var(--color-cyan); }
+
+.widget-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.widget-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.widget-status-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+}
+
+.badge-active { background: rgba(245, 158, 11, 0.2); color: var(--color-amber); border: 1px solid rgba(245, 158, 11, 0.4); }
+.badge-idle { background: var(--bg-card-subtle); color: var(--text-muted); }
+.badge-good { background: rgba(16, 185, 129, 0.2); color: var(--color-primary); border: 1px solid rgba(16, 185, 129, 0.4); }
+
+.widget-body {
+  margin-bottom: 14px;
+}
+
+/* Fasting Widget Body */
+.fasting-digits-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fasting-digits {
+  font-family: var(--font-mono);
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.stage-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+}
+
+.widget-hint-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.idle-text {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+/* Nutrition Widget Body */
+.nutrition-widget-stats {
+  display: flex;
+  flex-direction: column;
+}
+
+.n-stat-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.n-val-big {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.n-unit {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
+
+.n-sub {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.macro-mini-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+/* Workout Widget Body */
+.workout-status-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.w-streak-badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--color-amber);
+}
+
+.w-level-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card-subtle);
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.workout-action-text {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Widget Footer Button */
+.widget-footer {
+  border-top: 1px solid var(--border-color);
+  padding-top: 10px;
+}
+
+.widget-nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-cyan);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+.widget-nav-btn:hover {
+  color: var(--color-primary);
+}

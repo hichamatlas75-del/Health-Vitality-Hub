@@ -1,0 +1,27 @@
+{
+  "name": "unified-health-pwa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Health & Vitality Hub - PWA unifiée regroupant Jeûne Intermittent, Nutrition & Glucides Marocains, et Entraînement Sportif Maison.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "pwa",
+    "health",
+    "fasting",
+    "nutrition",
+    "workout",
+    "fitness",
+    "intermittent-fasting",
+    "glycemic-load"
+  ],
+  "author": "Health & Vitality Hub",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.4.11"
+  }
+}
