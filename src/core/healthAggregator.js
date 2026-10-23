@@ -105,8 +105,13 @@ export class HealthAggregator {
       const weight = Number(settings.weight || settings.userWeight) || workoutData?.prefs?.targetWeight || 85;
       const height = Number(settings.height) || workoutData?.prefs?.heightCm || 183;
 
-      // Repas du jour depuis Supabase
-      const allMeals = Array.isArray(supabaseAccount?.history) ? supabaseAccount.history : [];
+      // Repas du jour depuis Supabase (avec fallback local résilient en mode hors-ligne)
+      let allMeals = Array.isArray(supabaseAccount?.history) ? supabaseAccount.history : [];
+      if (allMeals.length === 0 && appStore.state?.nutrition) {
+        const localTodayMeals = appStore.getTodayMeals ? appStore.getTodayMeals() : (appStore.state.nutrition.todayMeals || []);
+        const localHistory = (appStore.state.nutrition.history || []).flatMap(h => h.meals || []);
+        allMeals = [...localTodayMeals, ...localHistory];
+      }
       const todayMeals = allMeals.filter(m => {
         const d = m.date || (m.timestamp ? new Date(m.timestamp).toISOString().slice(0, 10) : '');
         return d === todayStr;
@@ -200,8 +205,11 @@ export class HealthAggregator {
         }
       };
 
-      // Séances de sport depuis Firebase
-      const allWorkouts = Array.isArray(workoutData?.history) ? workoutData.history : [];
+      // Séances de sport depuis Firebase (avec fallback local résilient en mode hors-ligne)
+      let allWorkouts = Array.isArray(workoutData?.history) ? workoutData.history : [];
+      if (allWorkouts.length === 0 && Array.isArray(appStore.state?.workout?.history)) {
+        allWorkouts = appStore.state.workout.history;
+      }
       const todayWorkouts = allWorkouts.filter(w => {
         const d = w.date || (w.timestamp ? new Date(w.timestamp).toISOString().slice(0, 10) : '');
         return d === todayStr;

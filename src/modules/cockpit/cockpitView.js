@@ -52,6 +52,10 @@ export class CockpitView {
     }
   }
 
+  onStoreUpdate() {
+    healthAggregator.refresh().catch(() => {});
+  }
+
   updateFastingLiveClock() {
     const clockEl = document.getElementById('cockpitFastingTimer');
     const remainingEl = document.getElementById('cockpitFastingRemaining');
@@ -59,27 +63,41 @@ export class CockpitView {
 
     const now = new Date();
     const curH = now.getHours();
-    const curM = now.getMinutes();
-    const curS = now.getSeconds();
 
-    let isFasting = (curH >= 15 || curH < 9);
+    const isFasting = (curH >= 15 || curH < 9);
+    let start = new Date(now);
     let target = new Date(now);
 
     if (isFasting) {
       if (curH >= 15) {
+        start.setHours(15, 0, 0, 0);
         target.setDate(target.getDate() + 1);
+        target.setHours(9, 0, 0, 0);
+      } else {
+        start.setDate(start.getDate() - 1);
+        start.setHours(15, 0, 0, 0);
+        target.setHours(9, 0, 0, 0);
       }
-      target.setHours(9, 0, 0, 0);
     } else {
+      start.setHours(9, 0, 0, 0);
       target.setHours(15, 0, 0, 0);
     }
 
+    // Calcul temps écoulé
+    const elapsedMs = Math.max(0, now - start);
+    const elapsedSec = Math.floor(elapsedMs / 1000);
+    const eh = String(Math.floor(elapsedSec / 3600)).padStart(2, '0');
+    const em = String(Math.floor((elapsedSec % 3600) / 60)).padStart(2, '0');
+    const es = String(elapsedSec % 60).padStart(2, '0');
+
+    // Calcul temps restant
     const diffMs = Math.max(0, target - now);
     const diffSec = Math.floor(diffMs / 1000);
     const rh = String(Math.floor(diffSec / 3600)).padStart(2, '0');
     const rm = String(Math.floor((diffSec % 3600) / 60)).padStart(2, '0');
     const rs = String(diffSec % 60).padStart(2, '0');
 
+    clockEl.textContent = `${eh}:${em}:${es}`;
     if (remainingEl) {
       remainingEl.textContent = `${rh}:${rm}:${rs}`;
     }
@@ -392,7 +410,10 @@ export class CockpitView {
         try {
           await healthAggregator.refresh();
         } finally {
-          setTimeout(() => btnRefresh.classList.remove('spinning'), 500);
+          const freshBtn = document.getElementById('btnManualRefresh');
+          if (freshBtn) {
+            freshBtn.classList.remove('spinning');
+          }
         }
       });
     }

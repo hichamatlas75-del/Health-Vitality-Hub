@@ -34,7 +34,7 @@ export class Router {
     window.location.hash = `#${routeKey}`;
   }
 
-  handleHashChange() {
+  async handleHashChange() {
     const rawHash = window.location.hash.replace(/^#\/?/, '').trim();
     const routeKey = this.routes[rawHash] ? rawHash : this.defaultRoute;
 
@@ -48,21 +48,29 @@ export class Router {
 
     this.currentRoute = routeKey;
 
+    // Normalisation des alias pour l'affichage de l'onglet actif
+    const routeAliases = {
+      cockpit: 'dashboard',
+      historique: 'history'
+    };
+    const canonicalKey = routeAliases[routeKey] || routeKey;
+
     // Mise à jour visuelle des boutons de la barre de navigation
     this.navButtons.forEach(btn => {
-      if (btn.dataset.target === routeKey) {
+      if (btn.dataset.target === canonicalKey || btn.dataset.target === routeKey) {
         btn.classList.add('active');
       } else {
         btn.classList.remove('active');
       }
     });
 
-    // Instanciation de la vue
+    // Instanciation de la vue (synchrone ou asynchrone via dynamic import)
     const viewFactory = this.routes[routeKey];
     const container = document.getElementById('viewContainer');
     if (viewFactory && container) {
       container.scrollTop = 0;
-      this.currentViewInstance = viewFactory(container, (target) => this.navigate(target));
+      const instanceOrPromise = viewFactory(container, (target) => this.navigate(target));
+      this.currentViewInstance = instanceOrPromise instanceof Promise ? await instanceOrPromise : instanceOrPromise;
       if (this.currentViewInstance && typeof this.currentViewInstance.mount === 'function') {
         this.currentViewInstance.mount();
       }

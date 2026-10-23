@@ -3,6 +3,22 @@
  * Catalogue d'exercices par difficulté (Débutant, Intermédiaire, Avancé) et routines personnalisées.
  */
 
+export function renderExerciseMediaHtml(exercise) {
+  const iconMap = {
+    cardio: '⚡',
+    lower_body: '🦵',
+    upper_body: '💪',
+    core: '🛡️',
+    cooldown: '🧘'
+  };
+  const icon = iconMap[exercise?.category] || '🏋️';
+  return `<div class="exercise-media-placeholder">
+    <span class="ex-media-icon">${icon}</span>
+    <span class="ex-media-name">${exercise?.name || 'Exercice'}</span>
+    <span class="ex-media-tag">${exercise?.targetPrimary || 'Corps Entier'}</span>
+  </div>`;
+}
+
 export const EXERCISES_DATA = [
   {
     id: 1,

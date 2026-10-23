@@ -3,7 +3,7 @@
  * Cache offline pour fonctionnement 100% autonome sans connexion internet.
  */
 
-const CACHE_NAME = 'vitality-hub-v1';
+const CACHE_NAME = 'vitality-hub-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -36,11 +36,15 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // Pour les requêtes d'assets locaux et externes (Google Fonts, cdn), Stale-While-Revalidate
+  // Ignorer les protocoles internes de navigateur (chrome-extension, etc.)
+  if (!url.protocol.startsWith('http')) return;
+
+  // Stratégie pour les assets locaux et externes (Google Fonts, CDN, scripts, styles)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
+        // Mettre en cache les réponses standard (200) ainsi que les réponses opaques tierces (Google Fonts, CDN)
+        if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
@@ -48,10 +52,11 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       }).catch(() => {
-        // Mode hors ligne fallback
+        // Fallback hors-ligne pour la navigation SPA
         if (event.request.mode === 'navigate') {
           return caches.match('./index.html');
         }
+        return cachedResponse || Response.error();
       });
 
       return cachedResponse || fetchPromise;

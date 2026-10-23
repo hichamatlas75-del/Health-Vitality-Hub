@@ -9,30 +9,48 @@ import { initPWA } from './core/pwa.js';
 import { profileBackend } from './core/profileService.js';
 import { healthAggregator } from './core/healthAggregator.js';
 
+// Chargement eager de la vue principale pour un affichage instantané
 import { CockpitView } from './modules/cockpit/cockpitView.js';
-import { ObjectifsView } from './modules/objectifs/objectifsView.js';
-import { HistoriqueView } from './modules/history/historiqueView.js';
-import { CrossView } from './modules/cross/crossView.js';
-import { SourcesView } from './modules/sources/sourcesView.js';
 
-import { FastingView } from './modules/fasting/fastingView.js';
-import { NutritionView } from './modules/nutrition/nutritionView.js';
-import { WorkoutView } from './modules/workout/workoutView.js';
-
-// Table de routage modulaire du Cockpit Santé & Vitalité
+// Table de routage modulaire avec Code-Splitting à la demande
 const routes = {
   dashboard: (container, navigateTo) => new CockpitView(container, navigateTo),
   cockpit: (container, navigateTo) => new CockpitView(container, navigateTo),
-  objectifs: (container, navigateTo) => new ObjectifsView(container, navigateTo),
-  history: (container, navigateTo) => new HistoriqueView(container, navigateTo),
-  historique: (container, navigateTo) => new HistoriqueView(container, navigateTo),
-  cross: (container, navigateTo) => new CrossView(container, navigateTo),
-  sources: (container, navigateTo) => new SourcesView(container, navigateTo),
+
+  objectifs: async (container, navigateTo) => {
+    const { ObjectifsView } = await import('./modules/objectifs/objectifsView.js');
+    return new ObjectifsView(container, navigateTo);
+  },
+  history: async (container, navigateTo) => {
+    const { HistoriqueView } = await import('./modules/history/historiqueView.js');
+    return new HistoriqueView(container, navigateTo);
+  },
+  historique: async (container, navigateTo) => {
+    const { HistoriqueView } = await import('./modules/history/historiqueView.js');
+    return new HistoriqueView(container, navigateTo);
+  },
+  cross: async (container, navigateTo) => {
+    const { CrossView } = await import('./modules/cross/crossView.js');
+    return new CrossView(container, navigateTo);
+  },
+  sources: async (container, navigateTo) => {
+    const { SourcesView } = await import('./modules/sources/sourcesView.js');
+    return new SourcesView(container, navigateTo);
+  },
 
   // Vues secondaires / compatibilité
-  fasting: (container) => new FastingView(container),
-  nutrition: (container) => new NutritionView(container),
-  workout: (container) => new WorkoutView(container)
+  fasting: async (container) => {
+    const { FastingView } = await import('./modules/fasting/fastingView.js');
+    return new FastingView(container);
+  },
+  nutrition: async (container) => {
+    const { NutritionView } = await import('./modules/nutrition/nutritionView.js');
+    return new NutritionView(container);
+  },
+  workout: async (container) => {
+    const { WorkoutView } = await import('./modules/workout/workoutView.js');
+    return new WorkoutView(container);
+  }
 };
 
 // Initialisation au chargement du DOM

@@ -76,8 +76,8 @@ export class ObjectifsView {
           <div class="banner-gauge-side">
             <div class="gauge-ring-box">
               <svg class="gauge-ring-svg" viewBox="0 0 40 40">
-                <circle class="gauge-bg" cx="20" cy="20" r="16" />
-                <circle class="gauge-fill" cx="20" cy="20" r="16" stroke-dasharray="${globalPercent}, 100" />
+                <circle class="gauge-bg" cx="20" cy="20" r="16" pathLength="100" />
+                <circle class="gauge-fill" cx="20" cy="20" r="16" pathLength="100" stroke-dasharray="${globalPercent}, 100" />
               </svg>
               <span class="gauge-inner-txt">${accomplishedCount}/${totalObjectives}</span>
             </div>
