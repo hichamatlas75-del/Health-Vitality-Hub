@@ -4,8 +4,8 @@
   "description": "Cockpit exécutif de santé : Tableau de bord de lecture des 3 applications mères, analyse croisée métabolique et validation des objectifs journaliers.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#090d16",
-  "theme_color": "#090d16",
+  "background_color": "#0d1527",
+  "theme_color": "#0d1527",
   "orientation": "portrait-primary",
   "lang": "fr-FR",
   "icons": [

@@ -7,27 +7,28 @@
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Couleurs Fond & Surfaces */
-  --bg-app: #090d16;
-  --bg-card: #111827;
-  --bg-card-subtle: #1e293b;
-  --bg-card-hover: #26334d;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(16, 185, 129, 0.4);
+  /* Couleurs Fond & Surfaces : palette Luminous Deep Slate & Vitality */
+  --bg-app: #0d1527;
+  --bg-card: #182238;
+  --bg-card-subtle: #22304e;
+  --bg-card-hover: #2d3f66;
+  --border-color: rgba(255, 255, 255, 0.12);
+  --border-active: rgba(52, 211, 153, 0.6);
 
-  /* Couleurs Sémantiques */
+  /* Couleurs Sémantiques & Accents Énergiques */
   --color-primary: #10b981; /* Emerald Vitalité */
   --color-primary-hover: #059669;
-  --color-primary-soft: rgba(16, 185, 129, 0.12);
+  --color-primary-soft: rgba(16, 185, 129, 0.18);
 
   --color-cyan: #06b6d4;
   --color-indigo: #6366f1;
   --color-amber: #f59e0b;
   --color-rose: #f43f5e;
   --color-purple: #a855f7;
+  --color-blue: #38bdf8;
 
-  /* Typographie */
-  --text-main: #f8fafc;
+  /* Typographie haute lisibilité */
+  --text-main: #ffffff;
   --text-muted: #94a3b8;
   --text-dim: #64748b;
 
@@ -37,10 +38,12 @@
   --radius-lg: 20px;
   --radius-full: 9999px;
 
-  /* Ombres */
-  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
-  --shadow-glow-emerald: 0 0 25px rgba(16, 185, 129, 0.25);
-  --shadow-glow-orange: 0 0 25px rgba(245, 158, 11, 0.25);
+  /* Ombres & Lueurs Colorées */
+  --shadow-card: 0 8px 32px -4px rgba(0, 0, 0, 0.35);
+  --shadow-glow-emerald: 0 0 30px rgba(16, 185, 129, 0.3);
+  --shadow-glow-cyan: 0 0 30px rgba(6, 182, 212, 0.25);
+  --shadow-glow-orange: 0 0 30px rgba(245, 158, 11, 0.3);
+  --shadow-glow-indigo: 0 0 30px rgba(99, 102, 241, 0.3);
 }
 
 *, *::before, *::after {
@@ -55,6 +58,12 @@ html, body {
   height: 100%;
   overflow: hidden;
   background-color: var(--bg-app);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.16) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.18) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(245, 158, 11, 0.14) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(6, 182, 212, 0.15) 0px, transparent 50%);
+  background-attachment: fixed;
   color: var(--text-main);
   font-family: var(--font-sans);
   line-height: 1.5;
