@@ -310,6 +310,17 @@ export class ObjectifsView {
                 <div class="progress-track-lg">
                   <div class="progress-bar-lg bar-workout" style="width: ${sources.workoutHome.workoutsCountToday > 0 ? '100%' : '0%'};"></div>
                 </div>
+
+                ${sources.workoutHome.pedometer ? `
+                  <div class="obj-pedometer-subbox">
+                    <span class="opp-icon">🚶‍♂️</span>
+                    <div class="opp-info">
+                      <strong>${sources.workoutHome.pedometer.todaySteps.toLocaleString('fr-FR')} pas réalisés aujourd'hui</strong>
+                      <span>${sources.workoutHome.pedometer.caloriesBurned} kcal brûlées (pas) · ${sources.workoutHome.pedometer.percent}% de l'objectif 10 000</span>
+                    </div>
+                  </div>
+                ` : ''}
+
                 <div class="obj-details-note">
                   ${sources.workoutHome.workoutsCountToday > 0
                     ? `Félicitations ! Votre séance d'aujourd'hui est enregistrée dans le cloud Firebase.`

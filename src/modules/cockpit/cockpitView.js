@@ -338,6 +338,25 @@ export class CockpitView {
               </div>
             </div>
 
+            <!-- NOUVELLE CASE COMPTEUR PODOMÈTRE & CALORIES BRÛLÉES -->
+            <div class="cockpit-pedometer-strip">
+              <div class="cp-ped-item">
+                <span class="cp-ped-icon">🚶‍♂️</span>
+                <div class="cp-ped-meta">
+                  <span class="cp-ped-val">${(workoutHome.pedometer?.todaySteps || 0).toLocaleString('fr-FR')} <small class="cp-ped-unit">pas</small></span>
+                  <span class="cp-ped-sub">Objectif ${(workoutHome.pedometer?.targetSteps || 10000).toLocaleString('fr-FR')}</span>
+                </div>
+              </div>
+              <div class="cp-ped-divider"></div>
+              <div class="cp-ped-item">
+                <span class="cp-ped-icon">🔥</span>
+                <div class="cp-ped-meta">
+                  <span class="cp-ped-val">${workoutHome.pedometer?.caloriesBurned || 0} <small class="cp-ped-unit">kcal</small></span>
+                  <span class="cp-ped-sub">Calories brûlées</span>
+                </div>
+              </div>
+            </div>
+
             <div class="latest-workout-details">
               ${workoutHome.latestWorkout ? `
                 <div class="lw-row">

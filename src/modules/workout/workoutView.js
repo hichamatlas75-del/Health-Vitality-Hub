@@ -42,6 +42,9 @@ export class WorkoutView {
     workoutSync.sync().then(res => {
       if (res && res.success) {
         this.updateSyncBadge();
+        if (this.engine.state === WORKOUT_STATES.IDLE) {
+          this.render();
+        }
       }
     }).catch(() => {});
   }
@@ -67,6 +70,13 @@ export class WorkoutView {
     const routineExercises = getExercisesForLevel(this.selectedLevel);
     const estDurationMinutes = Math.round((routineExercises.length * 40 * this.selectedRounds) / 60);
     const creds = workoutSync.getCredentials();
+
+    const pedometer = appStore.getPedometer ? appStore.getPedometer() : (workoutState.pedometer || { todaySteps: 0, targetSteps: 10000, caloriesBurned: 0, distanceKm: 0 });
+    const stepsCount = pedometer.todaySteps || 0;
+    const stepsGoal = pedometer.targetSteps || 10000;
+    const stepsCalories = pedometer.caloriesBurned || Math.round(stepsCount * 0.045);
+    const stepsDistance = pedometer.distanceKm || Math.round((stepsCount * 0.00075) * 10) / 10;
+    const stepsPct = Math.min(100, Math.round((stepsCount / stepsGoal) * 100));
 
     this.container.innerHTML = `
       <div class="view-header">
@@ -116,6 +126,87 @@ export class WorkoutView {
             ` : `
               <span class="badge-pending">À faire aujourd'hui</span>
             `}
+          </div>
+        </div>
+      </div>
+
+      <!-- CASE COMPTEUR PODOMÈTRE & CALORIES BRÛLÉES (WORKOUT HOME) -->
+      <div class="pedometer-card">
+        <div class="pedometer-header">
+          <div class="pedometer-title-group">
+            <span class="pedometer-icon-badge">🚶‍♂️</span>
+            <div>
+              <span class="pedometer-kicker">WORKOUT HOME · PODOMÈTRE</span>
+              <h3 class="pedometer-card-title">Compteur de Pas &amp; Calories Brûlées</h3>
+            </div>
+          </div>
+          <span class="pedometer-badge-pct ${stepsPct >= 100 ? 'badge-goal-hit' : ''}">
+            ${stepsPct}% objectif
+          </span>
+        </div>
+
+        <div class="pedometer-boxes-grid">
+          <!-- Case 1: Nb de pas réalisé -->
+          <div class="pedometer-stat-box box-steps">
+            <span class="p-stat-icon">👟</span>
+            <div class="p-stat-meta">
+              <span class="p-stat-label">Pas Réalisés</span>
+              <div class="p-stat-number-wrap">
+                <span class="p-stat-value" id="pedStepsValue">${stepsCount.toLocaleString('fr-FR')}</span>
+                <span class="p-stat-target">/ ${stepsGoal.toLocaleString('fr-FR')}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Case 2: Calories brûlées -->
+          <div class="pedometer-stat-box box-calories">
+            <span class="p-stat-icon">🔥</span>
+            <div class="p-stat-meta">
+              <span class="p-stat-label">Calories Brûlées</span>
+              <div class="p-stat-number-wrap">
+                <span class="p-stat-value" id="pedCaloriesValue">${stepsCalories}</span>
+                <span class="p-stat-unit">kcal</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Case 3: Distance estimée -->
+          <div class="pedometer-stat-box box-distance">
+            <span class="p-stat-icon">📍</span>
+            <div class="p-stat-meta">
+              <span class="p-stat-label">Distance Estimée</span>
+              <div class="p-stat-number-wrap">
+                <span class="p-stat-value">${stepsDistance}</span>
+                <span class="p-stat-unit">km</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Jauge d'avancement -->
+        <div class="pedometer-gauge-container">
+          <div class="pedometer-gauge-bar">
+            <div class="pedometer-gauge-fill" style="width: ${stepsPct}%;"></div>
+          </div>
+          <div class="pedometer-gauge-hints">
+            <span>0 pas</span>
+            <span class="pedometer-remaining-hint">
+              ${stepsCount >= stepsGoal
+                ? '🎉 Bravo, objectif 10 000 pas validé !'
+                : `Encore ${(stepsGoal - stepsCount).toLocaleString('fr-FR')} pas pour atteindre l'objectif`}
+            </span>
+            <span>${stepsGoal.toLocaleString('fr-FR')}</span>
+          </div>
+        </div>
+
+        <!-- Boutons d'ajustement rapide et saisie -->
+        <div class="pedometer-footer-row">
+          <span class="p-quick-label">Ajuster vos pas :</span>
+          <div class="p-quick-buttons">
+            <button class="btn-step-add" data-step-add="500">+500 pas</button>
+            <button class="btn-step-add" data-step-add="1000">+1 000 pas</button>
+            <button class="btn-step-add" data-step-add="2500">+2 500 pas</button>
+            <button class="btn-step-custom" id="btnCustomStepsModal">✏️ Saisir</button>
           </div>
         </div>
       </div>
@@ -437,6 +528,35 @@ export class WorkoutView {
       btnClose.addEventListener('click', () => {
         this.selectedDetailExercise = null;
         this.render();
+      });
+    }
+
+    // Ajustement rapide des pas (+500, +1000, +2500)
+    this.container.querySelectorAll('.btn-step-add').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const toAdd = parseInt(btn.dataset.stepAdd, 10);
+        if (toAdd > 0) {
+          appStore.addSteps(toAdd);
+          // Synchro non-bloquante avec Firebase RTDB
+          workoutSync.sync().catch(() => {});
+          this.render();
+        }
+      });
+    });
+
+    // Saisie personnalisée du compteur de pas
+    const btnCustomSteps = this.container.querySelector('#btnCustomStepsModal');
+    if (btnCustomSteps) {
+      btnCustomSteps.addEventListener('click', () => {
+        const ped = appStore.getPedometer ? appStore.getPedometer() : appStore.state.workout.pedometer;
+        const current = ped?.todaySteps || 0;
+        const val = prompt("Entrez le nombre total de pas réalisés aujourd'hui :", current);
+        if (val !== null && val.trim() !== '' && !isNaN(val)) {
+          const num = Math.max(0, parseInt(val, 10));
+          appStore.updatePedometer({ todaySteps: num });
+          workoutSync.sync().catch(() => {});
+          this.render();
+        }
       });
     }
   }

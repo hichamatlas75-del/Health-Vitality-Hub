@@ -37,7 +37,15 @@ const DEFAULT_STATE = {
     todayCompleted: false,
     lastWorkoutDate: null,
     streak: 0,
-    history: []
+    history: [],
+    pedometer: {
+      todayDate: new Date().toISOString().slice(0, 10),
+      todaySteps: 0,
+      targetSteps: 10000,
+      caloriesBurned: 0,
+      distanceKm: 0,
+      history: []
+    }
   }
 };
 
@@ -59,7 +67,14 @@ class Store {
         user: { ...DEFAULT_STATE.user, ...(parsed.user || {}) },
         fasting: { ...DEFAULT_STATE.fasting, ...(parsed.fasting || {}) },
         nutrition: { ...DEFAULT_STATE.nutrition, ...(parsed.nutrition || {}) },
-        workout: { ...DEFAULT_STATE.workout, ...(parsed.workout || {}) }
+        workout: {
+          ...DEFAULT_STATE.workout,
+          ...(parsed.workout || {}),
+          pedometer: {
+            ...DEFAULT_STATE.workout.pedometer,
+            ...((parsed.workout && parsed.workout.pedometer) || {})
+          }
+        }
       };
     } catch (e) {
       console.warn('[Store] Erreur chargement localStorage:', e);
@@ -129,6 +144,41 @@ class Store {
           changed = true;
         }
       }
+      changed = true;
+    }
+
+    // Réinitialisation du podomètre du jour si changement de date
+    if (!this.state.workout.pedometer) {
+      this.state.workout.pedometer = {
+        todayDate: today,
+        todaySteps: 0,
+        targetSteps: 10000,
+        caloriesBurned: 0,
+        distanceKm: 0,
+        history: []
+      };
+      changed = true;
+    } else if (this.state.workout.pedometer.todayDate !== today) {
+      const prevDate = this.state.workout.pedometer.todayDate || '';
+      const prevSteps = this.state.workout.pedometer.todaySteps || 0;
+      if (prevSteps > 0) {
+        if (!Array.isArray(this.state.workout.pedometer.history)) {
+          this.state.workout.pedometer.history = [];
+        }
+        this.state.workout.pedometer.history.unshift({
+          date: prevDate,
+          steps: prevSteps,
+          caloriesBurned: this.state.workout.pedometer.caloriesBurned || Math.round(prevSteps * 0.045),
+          distanceKm: this.state.workout.pedometer.distanceKm || Math.round((prevSteps * 0.00075) * 10) / 10
+        });
+        if (this.state.workout.pedometer.history.length > 30) {
+          this.state.workout.pedometer.history.pop();
+        }
+      }
+      this.state.workout.pedometer.todayDate = today;
+      this.state.workout.pedometer.todaySteps = 0;
+      this.state.workout.pedometer.caloriesBurned = 0;
+      this.state.workout.pedometer.distanceKm = 0;
       changed = true;
     }
 
@@ -278,6 +328,54 @@ class Store {
     return session;
   }
 
+  // --- Actions Podomètre (Compteur de Pas & Calories) ---
+  getPedometer() {
+    this.checkDayRollover();
+    if (!this.state.workout.pedometer) {
+      this.state.workout.pedometer = {
+        todayDate: new Date().toISOString().slice(0, 10),
+        todaySteps: 0,
+        targetSteps: 10000,
+        caloriesBurned: 0,
+        distanceKm: 0,
+        history: []
+      };
+    }
+    return this.state.workout.pedometer;
+  }
+
+  updatePedometer(data = {}) {
+    this.checkDayRollover();
+    const ped = this.getPedometer();
+    const today = new Date().toISOString().slice(0, 10);
+    let steps = typeof data === 'number' ? data : (data.todaySteps ?? data.steps ?? ped.todaySteps);
+    steps = Math.max(0, Math.round(Number(steps) || 0));
+
+    const target = Number(data.targetSteps || ped.targetSteps) || 10000;
+    const cals = data.caloriesBurned != null ? Math.round(Number(data.caloriesBurned)) : Math.round(steps * 0.045);
+    const dist = data.distanceKm != null ? Math.round(Number(data.distanceKm) * 10) / 10 : Math.round((steps * 0.00075) * 10) / 10;
+    const hist = Array.isArray(data.history) ? data.history : (ped.history || []);
+
+    this.state.workout.pedometer = {
+      ...ped,
+      todayDate: today,
+      todaySteps: steps,
+      targetSteps: target,
+      caloriesBurned: cals,
+      distanceKm: dist,
+      history: hist,
+      lastUpdated: Date.now()
+    };
+    this.save();
+    return this.state.workout.pedometer;
+  }
+
+  addSteps(count = 0) {
+    const ped = this.getPedometer();
+    const newSteps = (ped.todaySteps || 0) + (Number(count) || 0);
+    return this.updatePedometer({ todaySteps: newSteps });
+  }
+
   // --- Sauvegarde & Restauration Complète ---
   exportBackup() {
     const backup = {
@@ -305,7 +403,14 @@ class Store {
         user: { ...DEFAULT_STATE.user, ...(parsed.data.user || {}) },
         fasting: { ...DEFAULT_STATE.fasting, ...(parsed.data.fasting || {}) },
         nutrition: { ...DEFAULT_STATE.nutrition, ...(parsed.data.nutrition || {}) },
-        workout: { ...DEFAULT_STATE.workout, ...(parsed.data.workout || {}) }
+        workout: {
+          ...DEFAULT_STATE.workout,
+          ...(parsed.data.workout || {}),
+          pedometer: {
+            ...DEFAULT_STATE.workout.pedometer,
+            ...((parsed.data.workout && parsed.data.workout.pedometer) || {})
+          }
+        }
       };
       this.save();
       return true;

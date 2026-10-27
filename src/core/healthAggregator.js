@@ -219,6 +219,23 @@ export class HealthAggregator {
       const totalLifetimeWorkouts = allWorkouts.length;
       const latestWorkout = allWorkouts[0] || null;
 
+      // Extraction et synchronisation du podomètre Workout Home
+      if (workoutData) {
+        const remotePed = workoutSync.extractPedometer(workoutData);
+        if (remotePed) {
+          workoutSync.mergePedometer(remotePed);
+        }
+      }
+      const localPedometer = appStore.getPedometer ? appStore.getPedometer() : (appStore.state?.workout?.pedometer || { todaySteps: 0, caloriesBurned: 0, targetSteps: 10000 });
+      const pedometer = {
+        todayDate: localPedometer.todayDate || todayStr,
+        todaySteps: localPedometer.todaySteps || 0,
+        targetSteps: localPedometer.targetSteps || 10000,
+        caloriesBurned: localPedometer.caloriesBurned || Math.round((localPedometer.todaySteps || 0) * 0.045),
+        distanceKm: localPedometer.distanceKm || Math.round(((localPedometer.todaySteps || 0) * 0.00075) * 10) / 10,
+        percent: Math.min(100, Math.round(((localPedometer.todaySteps || 0) / (localPedometer.targetSteps || 10000)) * 100))
+      };
+
       // 5. Croisement des Données (Cross-Analytics)
       const crossAnalytics = this.computeCrossAnalytics({
         todayMeals,
@@ -234,6 +251,7 @@ export class HealthAggregator {
         fastingStatus,
         todayWorkouts,
         allWorkouts,
+        pedometer,
         weight,
         height
       });
@@ -251,7 +269,8 @@ export class HealthAggregator {
         targetFat,
         targetCalories,
         protocol186,
-        todayWorkouts
+        todayWorkouts,
+        pedometer
       });
 
       this.cachedData = {
@@ -289,7 +308,8 @@ export class HealthAggregator {
             totalWorkouts: totalLifetimeWorkouts,
             latestWorkout,
             allWorkouts,
-            streak: workoutData?.prefs?.streak || 0
+            streak: workoutData?.prefs?.streak || 0,
+            pedometer
           },
           fastMaster: {
             active: true,
@@ -328,7 +348,7 @@ export class HealthAggregator {
    * Évalue l'accomplissement des 3 Objectifs Journaliers
    */
   evaluateObjectives(data) {
-    const { fastingStatus, todayMeals, todayNetCarbs, todayProtein, todayFat, todayCalories, targetCarbs, targetProtein, targetFat, targetCalories, protocol186, todayWorkouts } = data;
+    const { fastingStatus, todayMeals, todayNetCarbs, todayProtein, todayFat, todayCalories, targetCarbs, targetProtein, targetFat, targetCalories, protocol186, todayWorkouts, pedometer } = data;
 
     // --- OBJECTIF 1 : JEÛNE 18/6 ---
     // Dès le début du chrono de jeûne (15h00), la case est immédiatement marquée ACCOMPLI ✓
@@ -389,21 +409,34 @@ export class HealthAggregator {
       protocol186
     };
 
-    // --- OBJECTIF 3 : SPORT & ACTIVITÉ ---
+    // --- OBJECTIF 3 : SPORT & ACTIVITÉ (SÉANCE + PODOMÈTRE) ---
     const workoutDone = todayWorkouts.length > 0;
+    const stepsCount = pedometer?.todaySteps || 0;
+    const stepsGoal = pedometer?.targetSteps || 10000;
+    const stepsCals = pedometer?.caloriesBurned || Math.round(stepsCount * 0.045);
+    const stepsGoalReached = stepsCount >= stepsGoal;
+    const isWorkoutAccomplished = workoutDone || stepsGoalReached;
+
+    const pedometerLabel = stepsCount > 0 ? ` · 🚶‍♂️ ${stepsCount.toLocaleString('fr-FR')} pas (~${stepsCals} kcal)` : '';
+
     const objWorkout = {
       id: 'workout',
-      title: 'Séance Quotidienne Full Body 17',
-      target: '1 séance guidée par jour (~15-20 min)',
-      current: workoutDone ? `${todayWorkouts.length} séance validée aujourd'hui` : 'Aucune séance validée aujourd\'hui',
-      percent: workoutDone ? 100 : 0,
-      isAccomplished: workoutDone,
-      statusLabel: workoutDone ? 'Accompli ✓' : 'À réaliser aujourd\'hui',
-      tagClass: workoutDone ? 'badge-success' : 'badge-pending',
+      title: 'Séance Quotidienne Full Body 17 & Podomètre',
+      target: '1 séance guidée par jour (~15-20 min) · 10 000 pas',
+      current: workoutDone
+        ? `${todayWorkouts.length} séance validée aujourd'hui${pedometerLabel}`
+        : (stepsCount > 0 ? `Pas du jour : ${stepsCount.toLocaleString('fr-FR')} pas (~${stepsCals} kcal)` : 'Aucune séance validée aujourd\'hui'),
+      percent: workoutDone ? 100 : Math.min(90, Math.round((stepsCount / stepsGoal) * 50)),
+      isAccomplished: isWorkoutAccomplished,
+      statusLabel: workoutDone ? 'Accompli ✓' : (stepsGoalReached ? '10 000 Pas Validés ✓' : 'À réaliser aujourd\'hui'),
+      tagClass: isWorkoutAccomplished ? 'badge-success' : 'badge-pending',
       icon: '🏋️',
       details: workoutDone
-        ? `Séance terminée et envoyée au backend Workout Home. Bravo !`
-        : `Prévoyez votre routine au poids du corps pour valider vos 3/3 objectifs.`
+        ? `Séance terminée et envoyée au backend Workout Home. Bravo !${pedometerLabel}`
+        : (stepsCount > 0
+          ? `Podomètre actif : ${stepsCount.toLocaleString('fr-FR')} / ${stepsGoal.toLocaleString('fr-FR')} pas (${stepsCals} kcal brûlées). Complétez avec une séance au poids du corps.`
+          : `Prévoyez votre routine au poids du corps pour valider vos 3/3 objectifs.`),
+      pedometer
     };
 
     // Calcul du score global d'accomplissement (ex: 2/3)
@@ -423,7 +456,7 @@ export class HealthAggregator {
    * Analyse Croisée & Corrélations Métaboliques (Cross-Analytics)
    */
   computeCrossAnalytics(data) {
-    const { todayMeals, todayNetCarbs, todayProtein, todayFat = 0, todayCalories = 0, targetCarbs, targetProtein, targetFat = 80, targetCalories = 1950, protocol186, fastingStatus, todayWorkouts, allWorkouts, weight } = data;
+    const { todayMeals, todayNetCarbs, todayProtein, todayFat = 0, todayCalories = 0, targetCarbs, targetProtein, targetFat = 80, targetCalories = 1950, protocol186, fastingStatus, todayWorkouts, allWorkouts, pedometer, weight } = data;
 
     // 1. Analyse Synchronisation Repas vs Fenêtre de Jeûne
     const mealTimingChecks = todayMeals.map(meal => {
@@ -500,7 +533,9 @@ export class HealthAggregator {
       anabolismIndex,
       anabolismDesc,
       smartVerdict,
-      totalCaloriesEstimatedBurned: allWorkouts.reduce((acc, w) => acc + (w.caloriesEstimated || w.caloriesBurned || 150), 0)
+      totalCaloriesEstimatedBurned: allWorkouts.reduce((acc, w) => acc + (w.caloriesEstimated || w.caloriesBurned || 150), 0),
+      todayActiveCaloriesBurned: (todayWorkouts.reduce((acc, w) => acc + (w.caloriesEstimated || w.caloriesBurned || 120), 0)) + (pedometer?.caloriesBurned || 0),
+      pedometerToday: pedometer || null
     };
   }
 

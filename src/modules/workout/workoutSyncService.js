@@ -215,30 +215,53 @@ export class WorkoutSyncService {
       }
 
       // 2. Fusionner avec le store local
-      if (remoteData && remoteData.history && Array.isArray(remoteData.history)) {
-        const localHist = appStore.state.workout.history || [];
-        const merged = this.mergeWorkoutHistory(localHist, remoteData.history);
-        appStore.state.workout.history = merged;
+      if (remoteData) {
+        if (remoteData.history && Array.isArray(remoteData.history)) {
+          const localHist = appStore.state.workout.history || [];
+          const merged = this.mergeWorkoutHistory(localHist, remoteData.history);
+          appStore.state.workout.history = merged;
+        }
 
         if (remoteData.prefs) {
           if (remoteData.prefs.userLevel) {
             appStore.state.user.workoutLevel = remoteData.prefs.userLevel;
           }
         }
+
+        // Extraction et fusion du podomètre distant (Workout Home)
+        const remotePed = this.extractPedometer(remoteData);
+        if (remotePed) {
+          this.mergePedometer(remotePed);
+        }
+
         appStore.save();
       }
 
       // 3. Préparer le paquet de mise à jour pour Firebase
+      const pedometerState = appStore.getPedometer ? appStore.getPedometer() : appStore.state.workout.pedometer;
       const fullPayload = {
         app: 'FULL_BODY_17',
-        version: '2.3.8',
+        version: '2.4.0',
         syncedAt: Date.now(),
         prefs: {
           userName: appStore.state.user.name,
           userLevel: appStore.state.user.workoutLevel || 'intermediate',
           streak: appStore.state.workout.streak || 0,
           targetWeight: appStore.state.user.weight,
-          heightCm: appStore.state.user.height
+          heightCm: appStore.state.user.height,
+          dailySteps: pedometerState?.todaySteps || 0,
+          targetSteps: pedometerState?.targetSteps || 10000,
+          stepCalories: pedometerState?.caloriesBurned || 0,
+          stepDistanceKm: pedometerState?.distanceKm || 0
+        },
+        pedometer: {
+          todayDate: pedometerState?.todayDate || new Date().toISOString().slice(0, 10),
+          todaySteps: pedometerState?.todaySteps || 0,
+          targetSteps: pedometerState?.targetSteps || 10000,
+          caloriesBurned: pedometerState?.caloriesBurned || 0,
+          distanceKm: pedometerState?.distanceKm || 0,
+          history: pedometerState?.history || [],
+          lastUpdated: pedometerState?.lastUpdated || Date.now()
         },
         history: appStore.state.workout.history || [],
         weightHistory: []
@@ -274,6 +297,99 @@ export class WorkoutSyncService {
       }
     }
     return Array.from(map.values()).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).slice(0, 50);
+  }
+
+  /**
+   * Extrait et normalise les données de podomètre / compteur de pas depuis les données distantes
+   */
+  extractPedometer(remoteData) {
+    if (!remoteData) return null;
+    const today = new Date().toISOString().slice(0, 10);
+    let steps = null;
+    let target = 10000;
+    let calories = null;
+    let distance = null;
+    let history = [];
+    let date = today;
+
+    if (remoteData.pedometer) {
+      const p = remoteData.pedometer;
+      if (typeof p === 'number') {
+        steps = p;
+      } else if (typeof p === 'object') {
+        steps = p.todaySteps ?? p.steps ?? p.count ?? p.today;
+        target = p.targetSteps ?? p.target ?? p.goal ?? 10000;
+        calories = p.caloriesBurned ?? p.calories ?? p.kcal;
+        distance = p.distanceKm ?? p.distance;
+        date = p.todayDate || p.date || today;
+        if (Array.isArray(p.history)) history = p.history;
+      }
+    } else if (remoteData.steps != null) {
+      if (typeof remoteData.steps === 'number') {
+        steps = remoteData.steps;
+      } else if (typeof remoteData.steps === 'object') {
+        steps = remoteData.steps.today ?? remoteData.steps.count ?? remoteData.steps.steps;
+        target = remoteData.steps.goal ?? remoteData.steps.target ?? 10000;
+        calories = remoteData.steps.calories ?? remoteData.steps.kcal;
+        date = remoteData.steps.date || today;
+      }
+    } else if (remoteData.prefs?.dailySteps != null) {
+      steps = remoteData.prefs.dailySteps;
+      if (remoteData.prefs.targetSteps) target = remoteData.prefs.targetSteps;
+      if (remoteData.prefs.stepCalories) calories = remoteData.prefs.stepCalories;
+      if (remoteData.prefs.stepDistanceKm) distance = remoteData.prefs.stepDistanceKm;
+    }
+
+    if (steps == null) return null;
+
+    const numericSteps = Math.max(0, Math.round(Number(steps) || 0));
+    const numericCalories = calories != null ? Math.round(Number(calories)) : Math.round(numericSteps * 0.045);
+    const numericDistance = distance != null ? Math.round(Number(distance) * 10) / 10 : Math.round((numericSteps * 0.00075) * 10) / 10;
+
+    return {
+      todayDate: date,
+      todaySteps: numericSteps,
+      targetSteps: Number(target) || 10000,
+      caloriesBurned: numericCalories,
+      distanceKm: numericDistance,
+      history
+    };
+  }
+
+  /**
+   * Fusionne les données de podomètre distantes avec le store local sans perte
+   */
+  mergePedometer(remotePed) {
+    if (!remotePed) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const localPed = appStore.getPedometer ? appStore.getPedometer() : appStore.state.workout.pedometer;
+
+    // Si les données distantes sont pour aujourd'hui, on retient le max des pas
+    let mergedSteps = localPed?.todaySteps || 0;
+    if (remotePed.todayDate === today || !remotePed.todayDate) {
+      mergedSteps = Math.max(localPed?.todaySteps || 0, remotePed.todaySteps || 0);
+    }
+    const targetSteps = remotePed.targetSteps || localPed?.targetSteps || 10000;
+    const caloriesBurned = Math.max(localPed?.caloriesBurned || 0, remotePed.caloriesBurned || 0, Math.round(mergedSteps * 0.045));
+    const distanceKm = Math.max(localPed?.distanceKm || 0, remotePed.distanceKm || 0, Math.round((mergedSteps * 0.00075) * 10) / 10);
+
+    // Fusion de l'historique
+    let mergedHistory = localPed?.history || [];
+    if (Array.isArray(remotePed.history) && remotePed.history.length > 0) {
+      const histMap = new Map();
+      for (const h of [...mergedHistory, ...remotePed.history]) {
+        if (h && h.date) histMap.set(h.date, h);
+      }
+      mergedHistory = Array.from(histMap.values()).sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0, 30);
+    }
+
+    appStore.updatePedometer({
+      todaySteps: mergedSteps,
+      targetSteps,
+      caloriesBurned,
+      distanceKm,
+      history: mergedHistory
+    });
   }
 }
 
