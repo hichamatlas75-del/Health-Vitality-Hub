@@ -71,9 +71,9 @@ export class WorkoutView {
     const estDurationMinutes = Math.round((routineExercises.length * 40 * this.selectedRounds) / 60);
     const creds = workoutSync.getCredentials();
 
-    const pedometer = appStore.getPedometer ? appStore.getPedometer() : (workoutState.pedometer || { todaySteps: 0, targetSteps: 10000, caloriesBurned: 0, distanceKm: 0 });
+    const pedometer = appStore.getPedometer ? appStore.getPedometer() : (workoutState.pedometer || { todaySteps: 0, targetSteps: 8000, caloriesBurned: 0, distanceKm: 0 });
     const stepsCount = pedometer.todaySteps || 0;
-    const stepsGoal = pedometer.targetSteps || 10000;
+    const stepsGoal = pedometer.targetSteps || 8000;
     const stepsCalories = pedometer.caloriesBurned || Math.round(stepsCount * 0.045);
     const stepsDistance = pedometer.distanceKm || Math.round((stepsCount * 0.00075) * 10) / 10;
     const stepsPct = Math.min(100, Math.round((stepsCount / stepsGoal) * 100));
@@ -192,7 +192,7 @@ export class WorkoutView {
             <span>0 pas</span>
             <span class="pedometer-remaining-hint">
               ${stepsCount >= stepsGoal
-                ? '🎉 Bravo, objectif 10 000 pas validé !'
+                ? `🎉 Bravo, objectif ${stepsGoal.toLocaleString('fr-FR')} pas validé !`
                 : `Encore ${(stepsGoal - stepsCount).toLocaleString('fr-FR')} pas pour atteindre l'objectif`}
             </span>
             <span>${stepsGoal.toLocaleString('fr-FR')}</span>

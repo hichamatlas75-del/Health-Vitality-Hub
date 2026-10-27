@@ -226,14 +226,14 @@ export class HealthAggregator {
           workoutSync.mergePedometer(remotePed);
         }
       }
-      const localPedometer = appStore.getPedometer ? appStore.getPedometer() : (appStore.state?.workout?.pedometer || { todaySteps: 0, caloriesBurned: 0, targetSteps: 10000 });
+      const localPedometer = appStore.getPedometer ? appStore.getPedometer() : (appStore.state?.workout?.pedometer || { todaySteps: 0, caloriesBurned: 0, targetSteps: 8000 });
       const pedometer = {
         todayDate: localPedometer.todayDate || todayStr,
         todaySteps: localPedometer.todaySteps || 0,
-        targetSteps: localPedometer.targetSteps || 10000,
+        targetSteps: localPedometer.targetSteps || 8000,
         caloriesBurned: localPedometer.caloriesBurned || Math.round((localPedometer.todaySteps || 0) * 0.045),
         distanceKm: localPedometer.distanceKm || Math.round(((localPedometer.todaySteps || 0) * 0.00075) * 10) / 10,
-        percent: Math.min(100, Math.round(((localPedometer.todaySteps || 0) / (localPedometer.targetSteps || 10000)) * 100))
+        percent: Math.min(100, Math.round(((localPedometer.todaySteps || 0) / (localPedometer.targetSteps || 8000)) * 100))
       };
 
       // 5. Croisement des Données (Cross-Analytics)

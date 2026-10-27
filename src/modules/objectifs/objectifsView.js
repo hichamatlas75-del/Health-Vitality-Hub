@@ -316,7 +316,7 @@ export class ObjectifsView {
                     <span class="opp-icon">🚶‍♂️</span>
                     <div class="opp-info">
                       <strong>${sources.workoutHome.pedometer.todaySteps.toLocaleString('fr-FR')} pas réalisés aujourd'hui</strong>
-                      <span>${sources.workoutHome.pedometer.caloriesBurned} kcal brûlées (pas) · ${sources.workoutHome.pedometer.percent}% de l'objectif 10 000</span>
+                      <span>${sources.workoutHome.pedometer.caloriesBurned} kcal brûlées (pas) · ${sources.workoutHome.pedometer.percent}% de l'objectif ${(sources.workoutHome.pedometer.targetSteps || 8000).toLocaleString('fr-FR')} pas</span>
                     </div>
                   </div>
                 ` : ''}

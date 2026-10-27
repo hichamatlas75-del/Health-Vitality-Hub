@@ -237,34 +237,68 @@ export class WorkoutSyncService {
         appStore.save();
       }
 
-      // 3. Préparer le paquet de mise à jour pour Firebase
+      // 3. Préparer le paquet de mise à jour pour Firebase (compatibilité 100% Workout Home FULL BODY 17)
       const pedometerState = appStore.getPedometer ? appStore.getPedometer() : appStore.state.workout.pedometer;
+      const todayStr = new Date().toISOString().slice(0, 10);
+
+      // Reconstruire et préserver le dictionnaire stepsHistory officiel de Workout Home
+      const stepsHistoryObj = (remoteData && remoteData.stepsHistory && typeof remoteData.stepsHistory === 'object')
+        ? { ...remoteData.stepsHistory }
+        : {};
+
+      if (Array.isArray(pedometerState?.history)) {
+        pedometerState.history.forEach(h => {
+          if (h && h.date) {
+            stepsHistoryObj[h.date] = {
+              steps: h.steps || 0,
+              calories: h.caloriesBurned || Math.round((h.steps || 0) * 0.045),
+              distanceKm: h.distanceKm || Math.round(((h.steps || 0) * 0.00075) * 10) / 10,
+              updatedAt: Date.now()
+            };
+          }
+        });
+      }
+
+      if (pedometerState?.todaySteps > 0 || !stepsHistoryObj[todayStr]) {
+        const prevToday = stepsHistoryObj[todayStr] || {};
+        const maxSteps = Math.max(typeof prevToday === 'number' ? prevToday : (prevToday.steps || 0), pedometerState?.todaySteps || 0);
+        stepsHistoryObj[todayStr] = {
+          steps: maxSteps,
+          distanceKm: pedometerState?.distanceKm || (typeof prevToday === 'object' ? prevToday.distanceKm : 0) || Math.round((maxSteps * 0.00075) * 10) / 10,
+          calories: pedometerState?.caloriesBurned || (typeof prevToday === 'object' ? prevToday.calories : 0) || Math.round(maxSteps * 0.045),
+          updatedAt: Date.now()
+        };
+      }
+
       const fullPayload = {
         app: 'FULL_BODY_17',
-        version: '2.4.0',
+        version: '2.5.0',
         syncedAt: Date.now(),
         prefs: {
+          ...(remoteData?.prefs || {}),
           userName: appStore.state.user.name,
           userLevel: appStore.state.user.workoutLevel || 'intermediate',
           streak: appStore.state.workout.streak || 0,
           targetWeight: appStore.state.user.weight,
           heightCm: appStore.state.user.height,
+          dailyStepGoal: pedometerState?.targetSteps || 8000,
           dailySteps: pedometerState?.todaySteps || 0,
-          targetSteps: pedometerState?.targetSteps || 10000,
+          targetSteps: pedometerState?.targetSteps || 8000,
           stepCalories: pedometerState?.caloriesBurned || 0,
           stepDistanceKm: pedometerState?.distanceKm || 0
         },
+        stepsHistory: stepsHistoryObj, // Clé officielle interopérable avec FULL BODY 17
         pedometer: {
-          todayDate: pedometerState?.todayDate || new Date().toISOString().slice(0, 10),
+          todayDate: pedometerState?.todayDate || todayStr,
           todaySteps: pedometerState?.todaySteps || 0,
-          targetSteps: pedometerState?.targetSteps || 10000,
+          targetSteps: pedometerState?.targetSteps || 8000,
           caloriesBurned: pedometerState?.caloriesBurned || 0,
           distanceKm: pedometerState?.distanceKm || 0,
           history: pedometerState?.history || [],
           lastUpdated: pedometerState?.lastUpdated || Date.now()
         },
         history: appStore.state.workout.history || [],
-        weightHistory: []
+        weightHistory: remoteData?.weightHistory || []
       };
 
       // 4. Chiffrer et envoyer (PUT) vers Firebase RTDB
@@ -300,56 +334,114 @@ export class WorkoutSyncService {
   }
 
   /**
-   * Extrait et normalise les données de podomètre / compteur de pas depuis les données distantes
+   * Extrait et normalise les données de podomètre / compteur de pas depuis les données distantes (Workout Home)
    */
   extractPedometer(remoteData) {
-    if (!remoteData) return null;
     const today = new Date().toISOString().slice(0, 10);
     let steps = null;
-    let target = 10000;
+    let target = 8000;
     let calories = null;
     let distance = null;
     let history = [];
     let date = today;
 
-    if (remoteData.pedometer) {
+    // 1. Structure officielle Workout Home (FULL BODY 17) : stepsHistory = { "YYYY-MM-DD": { steps, distanceKm, calories, ... } }
+    if (remoteData?.stepsHistory && typeof remoteData.stepsHistory === 'object') {
+      const sh = remoteData.stepsHistory;
+      const dates = Object.keys(sh).sort();
+      const todayEntry = sh[today] || (dates.length > 0 ? sh[dates[dates.length - 1]] : null);
+      if (todayEntry) {
+        if (typeof todayEntry === 'number') {
+          steps = todayEntry;
+        } else {
+          steps = todayEntry.steps ?? todayEntry.count;
+          calories = todayEntry.calories ?? todayEntry.kcal;
+          distance = todayEntry.distanceKm ?? todayEntry.distance;
+        }
+      }
+
+      // Convertir toutes les entrées enregistrées en tableau d'historique
+      for (const d of dates) {
+        const item = sh[d];
+        const s = typeof item === 'number' ? item : (item?.steps || 0);
+        const c = typeof item === 'number' ? Math.round(s * 0.045) : (item?.calories || Math.round(s * 0.045));
+        const dist = typeof item === 'number' ? Math.round((s * 0.00075) * 10) / 10 : (item?.distanceKm || 0);
+        history.push({ date: d, steps: s, caloriesBurned: c, distanceKm: dist });
+      }
+    }
+
+    // 2. Format alternatif podometer = { todaySteps, ... }
+    if (steps == null && remoteData?.pedometer) {
       const p = remoteData.pedometer;
       if (typeof p === 'number') {
         steps = p;
       } else if (typeof p === 'object') {
         steps = p.todaySteps ?? p.steps ?? p.count ?? p.today;
-        target = p.targetSteps ?? p.target ?? p.goal ?? 10000;
+        target = p.targetSteps ?? p.target ?? p.goal ?? target;
         calories = p.caloriesBurned ?? p.calories ?? p.kcal;
         distance = p.distanceKm ?? p.distance;
         date = p.todayDate || p.date || today;
         if (Array.isArray(p.history)) history = p.history;
       }
-    } else if (remoteData.steps != null) {
+    }
+
+    // 3. Format alternatif steps = number ou { today, goal, calories }
+    if (steps == null && remoteData?.steps != null) {
       if (typeof remoteData.steps === 'number') {
         steps = remoteData.steps;
       } else if (typeof remoteData.steps === 'object') {
         steps = remoteData.steps.today ?? remoteData.steps.count ?? remoteData.steps.steps;
-        target = remoteData.steps.goal ?? remoteData.steps.target ?? 10000;
+        target = remoteData.steps.goal ?? remoteData.steps.target ?? target;
         calories = remoteData.steps.calories ?? remoteData.steps.kcal;
         date = remoteData.steps.date || today;
       }
-    } else if (remoteData.prefs?.dailySteps != null) {
-      steps = remoteData.prefs.dailySteps;
-      if (remoteData.prefs.targetSteps) target = remoteData.prefs.targetSteps;
-      if (remoteData.prefs.stepCalories) calories = remoteData.prefs.stepCalories;
-      if (remoteData.prefs.stepDistanceKm) distance = remoteData.prefs.stepDistanceKm;
     }
+
+    // 4. Format préférences Workout Home (dailyStepGoal, dailySteps)
+    if (remoteData?.prefs) {
+      if (remoteData.prefs.dailyStepGoal) target = Number(remoteData.prefs.dailyStepGoal);
+      else if (remoteData.prefs.targetSteps) target = Number(remoteData.prefs.targetSteps);
+
+      if (steps == null && remoteData.prefs.dailySteps != null) {
+        steps = remoteData.prefs.dailySteps;
+        if (remoteData.prefs.stepCalories) calories = remoteData.prefs.stepCalories;
+        if (remoteData.prefs.stepDistanceKm) distance = remoteData.prefs.stepDistanceKm;
+      }
+    }
+
+    // 5. Lecture directe depuis le localStorage partagé (si ouvert dans le même navigateur / domaine)
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const localStepsRaw = localStorage.getItem('fb17_steps_history')
+          || localStorage.getItem('fb17_prof_default_steps')
+          || localStorage.getItem('fb17_prof_hicham_steps');
+        if (localStepsRaw) {
+          const parsed = JSON.parse(localStepsRaw);
+          if (parsed && typeof parsed === 'object') {
+            const entry = parsed[today] || parsed[Object.keys(parsed).sort().pop()];
+            if (entry) {
+              const localSteps = typeof entry === 'number' ? entry : (entry.steps || 0);
+              if (localSteps > (steps || 0)) {
+                steps = localSteps;
+                calories = (typeof entry === 'object' && entry.calories != null) ? entry.calories : calories;
+                distance = (typeof entry === 'object' && entry.distanceKm != null) ? entry.distanceKm : distance;
+              }
+            }
+          }
+        }
+      }
+    } catch (_) {}
 
     if (steps == null) return null;
 
     const numericSteps = Math.max(0, Math.round(Number(steps) || 0));
     const numericCalories = calories != null ? Math.round(Number(calories)) : Math.round(numericSteps * 0.045);
-    const numericDistance = distance != null ? Math.round(Number(distance) * 10) / 10 : Math.round((numericSteps * 0.00075) * 10) / 10;
+    const numericDistance = distance != null ? Math.round(Number(distance) * 100) / 100 : Math.round((numericSteps * 0.00075) * 10) / 10;
 
     return {
       todayDate: date,
       todaySteps: numericSteps,
-      targetSteps: Number(target) || 10000,
+      targetSteps: Number(target) || 8000,
       caloriesBurned: numericCalories,
       distanceKm: numericDistance,
       history
@@ -366,12 +458,21 @@ export class WorkoutSyncService {
 
     // Si les données distantes sont pour aujourd'hui, on retient le max des pas
     let mergedSteps = localPed?.todaySteps || 0;
+    let caloriesBurned = localPed?.caloriesBurned || 0;
+    let distanceKm = localPed?.distanceKm || 0;
+
     if (remotePed.todayDate === today || !remotePed.todayDate) {
-      mergedSteps = Math.max(localPed?.todaySteps || 0, remotePed.todaySteps || 0);
+      if ((remotePed.todaySteps || 0) >= (localPed?.todaySteps || 0)) {
+        mergedSteps = remotePed.todaySteps || 0;
+        caloriesBurned = remotePed.caloriesBurned || Math.round(mergedSteps * 0.045);
+        distanceKm = remotePed.distanceKm || Math.round((mergedSteps * 0.00075) * 10) / 10;
+      } else {
+        mergedSteps = localPed?.todaySteps || 0;
+        caloriesBurned = localPed?.caloriesBurned || Math.round(mergedSteps * 0.045);
+        distanceKm = localPed?.distanceKm || Math.round((mergedSteps * 0.00075) * 10) / 10;
+      }
     }
-    const targetSteps = remotePed.targetSteps || localPed?.targetSteps || 10000;
-    const caloriesBurned = Math.max(localPed?.caloriesBurned || 0, remotePed.caloriesBurned || 0, Math.round(mergedSteps * 0.045));
-    const distanceKm = Math.max(localPed?.distanceKm || 0, remotePed.distanceKm || 0, Math.round((mergedSteps * 0.00075) * 10) / 10);
+    const targetSteps = remotePed.targetSteps || localPed?.targetSteps || 8000;
 
     // Fusion de l'historique
     let mergedHistory = localPed?.history || [];

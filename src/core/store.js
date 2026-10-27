@@ -41,7 +41,7 @@ const DEFAULT_STATE = {
     pedometer: {
       todayDate: new Date().toISOString().slice(0, 10),
       todaySteps: 0,
-      targetSteps: 10000,
+      targetSteps: 8000,
       caloriesBurned: 0,
       distanceKm: 0,
       history: []
@@ -351,7 +351,7 @@ class Store {
     let steps = typeof data === 'number' ? data : (data.todaySteps ?? data.steps ?? ped.todaySteps);
     steps = Math.max(0, Math.round(Number(steps) || 0));
 
-    const target = Number(data.targetSteps || ped.targetSteps) || 10000;
+    const target = Number(data.targetSteps || ped.targetSteps) || 8000;
     const cals = data.caloriesBurned != null ? Math.round(Number(data.caloriesBurned)) : Math.round(steps * 0.045);
     const dist = data.distanceKm != null ? Math.round(Number(data.distanceKm) * 10) / 10 : Math.round((steps * 0.00075) * 10) / 10;
     const hist = Array.isArray(data.history) ? data.history : (ped.history || []);
