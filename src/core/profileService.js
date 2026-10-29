@@ -73,24 +73,46 @@ export class ProfileBackendService {
 
   /**
    * Récupère un profil utilisateur depuis Supabase (table app_accounts)
+   * avec timeout résilient et nouvelle tentative automatique en cas de coupure mobile
    */
-  async fetchSupabaseAccount(username) {
+  async fetchSupabaseAccount(username, retry = true) {
     const clean = String(username || '').toLowerCase().trim();
     if (!clean) return { ok: false, error: 'Pseudo manquant' };
 
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timeoutId = controller ? setTimeout(() => controller.abort(), 8000) : null;
+
     try {
-      const res = await fetch(`${SUPABASE_REST_URL}/app_accounts?username=eq.${encodeURIComponent(clean)}&select=*`, {
+      const fetchOpts = {
         method: 'GET',
         headers: {
           'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
         }
-      });
-      if (!res.ok) return { ok: false, error: `Erreur HTTP ${res.status}` };
+      };
+      if (controller) fetchOpts.signal = controller.signal;
+
+      const res = await fetch(`${SUPABASE_REST_URL}/app_accounts?username=eq.${encodeURIComponent(clean)}&select=*`, fetchOpts);
+      if (timeoutId) clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        if (retry && (res.status >= 500 || res.status === 408)) {
+          await new Promise(r => setTimeout(r, 600));
+          return this.fetchSupabaseAccount(clean, false);
+        }
+        return { ok: false, error: `Erreur HTTP ${res.status}` };
+      }
       const data = await res.json();
       return { ok: true, account: Array.isArray(data) ? (data[0] || null) : null };
     } catch (e) {
-      return { ok: false, error: e.message || 'Serveur cloud injoignable' };
+      if (timeoutId) clearTimeout(timeoutId);
+      if (retry) {
+        console.warn('[ProfileBackend] Nouvelle tentative fetchSupabaseAccount pour:', clean);
+        await new Promise(r => setTimeout(r, 800));
+        return this.fetchSupabaseAccount(clean, false);
+      }
+      const errMsg = e.name === 'AbortError' ? 'Délai d\'attente dépassé (timeout 8s)' : (e.message || 'Serveur cloud injoignable');
+      return { ok: false, error: errMsg };
     }
   }
 

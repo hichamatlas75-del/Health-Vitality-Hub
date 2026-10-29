@@ -78,11 +78,16 @@ export class SourcesView {
               <span class="src-url">https://${glucoCarb.url}/rest/v1/app_accounts</span>
             </div>
             <span class="src-status-pill ${glucoCarb.connected ? 'pill-online' : 'pill-offline'}">
-              ${glucoCarb.connected ? 'Actif & Synchronisé 🟢' : 'Erreur Connexion 🔴'}
+              ${glucoCarb.connected ? 'Actif & Synchronisé 🟢' : `Erreur Connexion 🔴 ${glucoCarb.error ? `(${glucoCarb.error})` : ''}`}
             </span>
           </div>
 
           <div class="source-card-body">
+            ${!glucoCarb.connected && glucoCarb.error ? `
+              <div class="source-error-banner" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; color: #fca5a5; font-size: 0.85rem;">
+                ⚠️ <strong>Diagnostic Supabase :</strong> ${glucoCarb.error}
+              </div>
+            ` : ''}
             <div class="src-stats-grid">
               <div class="src-stat-cell">
                 <span class="cell-label">Compte Utilisateur</span>
@@ -129,11 +134,16 @@ export class SourcesView {
               <span class="src-url">https://${workoutHome.url}/workout_profiles/</span>
             </div>
             <span class="src-status-pill ${workoutHome.connected ? 'pill-online' : 'pill-offline'}">
-              ${workoutHome.connected ? 'Déchiffré AES-256 🟢' : 'Chiffré / Non synchronisé 🔴'}
+              ${workoutHome.connected ? 'Déchiffré AES-256 🟢' : `Chiffré / Non synchronisé 🔴 ${workoutHome.error ? `(${workoutHome.error})` : ''}`}
             </span>
           </div>
 
           <div class="source-card-body">
+            ${!workoutHome.connected && workoutHome.error ? `
+              <div class="source-error-banner" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; color: #fca5a5; font-size: 0.85rem;">
+                ⚠️ <strong>Diagnostic Firebase :</strong> ${workoutHome.error}
+              </div>
+            ` : ''}
             <div class="src-stats-grid">
               <div class="src-stat-cell">
                 <span class="cell-label">Identifiant Dérivé SHA-256</span>

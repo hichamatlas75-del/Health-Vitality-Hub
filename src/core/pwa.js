@@ -10,6 +10,10 @@ export function initPWA() {
       navigator.serviceWorker.register('./sw.js')
         .then((reg) => {
           console.log('[PWA] Service Worker actif, scope:', reg.scope);
+          // Forcer la vérification de mise à jour immédiate
+          if (reg && typeof reg.update === 'function') {
+            reg.update().catch(() => {});
+          }
         })
         .catch((err) => {
           console.warn('[PWA] Échec enregistrement SW:', err);

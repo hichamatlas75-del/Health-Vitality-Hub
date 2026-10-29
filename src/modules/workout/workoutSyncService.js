@@ -159,7 +159,7 @@ export class WorkoutSyncService {
     return null;
   }
 
-  // Requête multi-routes vers Firebase Direct ou Gateway Cloudflare
+  // Requête multi-routes vers Firebase Direct ou Gateway Cloudflare avec timeout résilient
   async cloudSyncRequest(userHash, method = 'GET', data = null) {
     const routes = [
       `${DIRECT_FIREBASE_RTDB}/workout_profiles/${encodeURIComponent(userHash)}.json`,
@@ -169,23 +169,31 @@ export class WorkoutSyncService {
     let lastError = null;
 
     for (const url of routes) {
+      const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      const timeoutId = controller ? setTimeout(() => controller.abort(), 6500) : null;
+
       try {
         const fetchOpts = { method, mode: 'cors' };
+        if (controller) fetchOpts.signal = controller.signal;
         if (data) {
           fetchOpts.headers = { 'Content-Type': 'application/json' };
           fetchOpts.body = typeof data === 'string' ? data : JSON.stringify(data);
         }
         const resp = await fetch(url, fetchOpts);
+        if (timeoutId) clearTimeout(timeoutId);
+
         if (resp.ok) {
           const text = await resp.text();
           return text && text !== 'null' ? JSON.parse(text) : null;
         }
       } catch (err) {
+        if (timeoutId) clearTimeout(timeoutId);
         lastError = err;
+        console.warn(`[WorkoutSync] Échec route ${url.slice(0, 35)}...:`, err.message);
       }
     }
 
-    throw lastError || new Error("Serveur Workout Home injoignable");
+    throw lastError || new Error("Serveurs Workout Home (Firebase & Gateway) injoignables");
   }
 
   /**

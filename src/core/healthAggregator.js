@@ -71,24 +71,32 @@ export class HealthAggregator {
     try {
       // 1. Lecture Backend Gluco-Carb Maroc (Supabase Cloud)
       let supabaseAccount = null;
+      let supabaseError = null;
       try {
         const res = await profileBackend.fetchSupabaseAccount(username);
         if (res.ok && res.account) {
           supabaseAccount = res.account;
+        } else {
+          supabaseError = res.error || 'Compte introuvable sur Supabase';
         }
       } catch (err) {
+        supabaseError = err.message || 'Erreur réseau Supabase';
         console.warn('[Aggregator] Supabase fetch error:', err);
       }
 
       // 2. Lecture Backend Workout Home (Firebase RTDB)
       let workoutData = null;
+      let workoutError = null;
       try {
         const hash = await workoutSync.hashUserId(username);
         const env = await workoutSync.cloudSyncRequest(hash, 'GET');
         if (env) {
           workoutData = await workoutSync.decryptPayload(env, username, password);
+        } else {
+          workoutError = 'Aucune donnée distante trouvée';
         }
       } catch (err) {
+        workoutError = err.message || 'Erreur réseau Firebase';
         console.warn('[Aggregator] Firebase fetch error:', err);
       }
 
@@ -117,29 +125,91 @@ export class HealthAggregator {
         return d === todayStr;
       });
 
-      const todayNetCarbs = todayMeals.reduce((sum, m) => sum + (Number(m.net_carbs_g || m.netCarbs || m.totalNetCarbs) || 0), 0);
-      const todayProtein = todayMeals.reduce((sum, m) => sum + (Number(m.proteins_g || m.protein || m.totalProtein) || 0), 0);
-      const todayFat = todayMeals.reduce((sum, m) => sum + (Number(m.fat_g || m.fat || m.totalFat || m.lipides) || 0), 0);
-      const todayCalories = todayMeals.reduce((sum, m) => {
-        const cal = Number(m.calories || m.kcal || m.totalCalories);
-        if (cal > 0) return sum + cal;
-        const c = Number(m.net_carbs_g || m.netCarbs || m.totalNetCarbs || 0);
+      // Estimation fine des lipides et calories pour chaque repas
+      const estimateMealMacros = (m) => {
         const p = Number(m.proteins_g || m.protein || m.totalProtein || 0);
-        const f = Number(m.fat_g || m.fat || m.totalFat || m.lipides || 0);
-        return sum + Math.round(p * 4 + c * 4 + f * 9);
-      }, 0);
+        const c = Number(m.net_carbs_g || m.netCarbs || m.totalNetCarbs || 0);
+        let f = Number(m.fat_g || m.fat || m.totalFat || m.lipides || 0);
+
+        if (f === 0 && Array.isArray(m.items) && m.items.length > 0) {
+          for (const it of m.items) {
+            const name = String(it.name || '').toLowerCase();
+            const grams = Number(it.grams) || 100;
+            const factor = grams / 100;
+            if (name.includes('œuf') || name.includes('oeuf') || name.includes('baid')) {
+              f += 10.5 * factor;
+            } else if (name.includes('jben') || name.includes('fromage')) {
+              f += 22.0 * factor;
+            } else if (name.includes('huile') || name.includes('zit')) {
+              f += 100.0 * factor;
+            } else if (name.includes('lentille') || name.includes('adass') || name.includes('3dass')) {
+              f += 3.5 * factor;
+            } else if (name.includes('pain') || name.includes('khobz')) {
+              f += 1.8 * factor;
+            } else if (name.includes('poulet') || name.includes('djaj')) {
+              f += 4.5 * factor;
+            } else if (name.includes('kefta') || name.includes('viande')) {
+              f += 16.0 * factor;
+            } else if (name.includes('avocat')) {
+              f += 15.0 * factor;
+            } else if (name.includes('sardine') || name.includes('poisson')) {
+              f += 11.5 * factor;
+            }
+          }
+        }
+        if (f === 0 && p > 0) {
+          f = Math.round(p * 0.4 * 10) / 10;
+        }
+
+        const expCal = Number(m.calories || m.kcal || m.totalCalories);
+        const cal = (expCal > 0) ? expCal : Math.round(p * 4 + c * 4 + f * 9);
+        return {
+          protein: Math.round(p * 10) / 10,
+          carbs: Math.round(c * 10) / 10,
+          fat: Math.round(f * 10) / 10,
+          calories: cal
+        };
+      };
+
+      const computedMeals = todayMeals.map(m => {
+        const macros = estimateMealMacros(m);
+        const itemsTitle = Array.isArray(m.items) && m.items.length > 0
+          ? m.items.map(i => `${i.name}${i.grams ? ` (${i.grams}g)` : ''}`).join(', ')
+          : null;
+        return {
+          ...m,
+          computedProtein: macros.protein,
+          computedCarbs: macros.carbs,
+          computedFat: macros.fat,
+          computedCalories: macros.calories,
+          displayTitle: m.title || itemsTitle || 'Repas journalisé'
+        };
+      });
+
+      const todayNetCarbs = computedMeals.reduce((sum, m) => sum + m.computedCarbs, 0);
+      const todayProtein = computedMeals.reduce((sum, m) => sum + m.computedProtein, 0);
+      const todayFat = computedMeals.reduce((sum, m) => sum + m.computedFat, 0);
+      const todayCalories = computedMeals.reduce((sum, m) => sum + m.computedCalories, 0);
       const todayGL = todayMeals.reduce((sum, m) => sum + (Number(m.glycemic_load || m.glycemicLoad || m.totalGL) || 0), 0);
 
       // Repas 1 (10h00 - 40%) et Repas 2 (15h00 - 60%)
-      const meal1 = todayMeals.find(m => {
+      let meal1 = computedMeals.find(m => {
         const h = new Date(m.timestamp || (m.date + 'T10:00:00')).getHours();
-        return (m.slot === 'morning' || h < 12);
+        return (m.slot === 'morning' || m.mealSlot === 'morning' || h < 12);
       }) || null;
 
-      const meal2 = todayMeals.find(m => {
+      let meal2 = computedMeals.find(m => {
         const h = new Date(m.timestamp || (m.date + 'T15:00:00')).getHours();
-        return (m.slot === 'noon' || (h >= 12 && h < 16));
+        return (m !== meal1) && (m.slot === 'noon' || m.mealSlot === 'noon' || (h >= 12 && h < 18));
       }) || null;
+
+      // Si l'utilisateur a enregistré 2 repas sans créneau distinct matinal
+      if (!meal1 && computedMeals.length >= 2) {
+        meal1 = computedMeals[computedMeals.length - 1]; // le plus ancien
+        meal2 = computedMeals[0]; // le plus récent
+      } else if (!meal1 && computedMeals.length === 1) {
+        meal1 = computedMeals[0];
+      }
 
       const protocol186 = {
         targets: {
@@ -161,12 +231,12 @@ export class HealthAggregator {
           targetFat: 32,
           actual: meal1 ? {
             logged: true,
-            title: meal1.title || 'Rupture 10h',
-            calories: Math.round(Number(meal1.calories || meal1.kcal || meal1.totalCalories || ((Number(meal1.proteins_g || meal1.protein || 0)*4) + (Number(meal1.net_carbs_g || meal1.netCarbs || 0)*4) + (Number(meal1.fat_g || meal1.fat || 0)*9)))),
-            protein: Math.round(Number(meal1.proteins_g || meal1.protein || meal1.totalProtein || 0) * 10) / 10,
-            carbs: Math.round(Number(meal1.net_carbs_g || meal1.netCarbs || meal1.totalNetCarbs || 0) * 10) / 10,
-            fat: Math.round(Number(meal1.fat_g || meal1.fat || meal1.totalFat || meal1.lipides || 0) * 10) / 10,
-            timeFormatted: meal1.timeFormatted || '10:00'
+            title: meal1.displayTitle,
+            calories: meal1.computedCalories,
+            protein: meal1.computedProtein,
+            carbs: meal1.computedCarbs,
+            fat: meal1.computedFat,
+            timeFormatted: meal1.timestamp ? new Date(meal1.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : (meal1.timeFormatted || '10:00')
           } : {
             logged: false,
             title: 'En attente',
@@ -187,12 +257,12 @@ export class HealthAggregator {
           targetFat: 48,
           actual: meal2 ? {
             logged: true,
-            title: meal2.title || 'Clôture 15h',
-            calories: Math.round(Number(meal2.calories || meal2.kcal || meal2.totalCalories || ((Number(meal2.proteins_g || meal2.protein || 0)*4) + (Number(meal2.net_carbs_g || meal2.netCarbs || 0)*4) + (Number(meal2.fat_g || meal2.fat || 0)*9)))),
-            protein: Math.round(Number(meal2.proteins_g || meal2.protein || meal2.totalProtein || 0) * 10) / 10,
-            carbs: Math.round(Number(meal2.net_carbs_g || meal2.netCarbs || meal2.totalNetCarbs || 0) * 10) / 10,
-            fat: Math.round(Number(meal2.fat_g || meal2.fat || meal2.totalFat || meal2.lipides || 0) * 10) / 10,
-            timeFormatted: meal2.timeFormatted || '15:00'
+            title: meal2.displayTitle,
+            calories: meal2.computedCalories,
+            protein: meal2.computedProtein,
+            carbs: meal2.computedCarbs,
+            fat: meal2.computedFat,
+            timeFormatted: meal2.timestamp ? new Date(meal2.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : (meal2.timeFormatted || '15:00')
           } : {
             logged: false,
             title: 'En attente',
@@ -289,6 +359,7 @@ export class HealthAggregator {
         sources: {
           glucoCarb: {
             connected: Boolean(supabaseAccount),
+            error: supabaseError,
             url: 'plrqzuwbnuryxtsmimyt.supabase.co',
             mealsCountToday: todayMeals.length,
             totalMealsCount: allMeals.length,
@@ -303,6 +374,7 @@ export class HealthAggregator {
           },
           workoutHome: {
             connected: Boolean(workoutData),
+            error: workoutError,
             url: 'workout-homefb17-default-rtdb.europe-west1.firebasedatabase.app',
             workoutsCountToday,
             totalWorkouts: totalLifetimeWorkouts,
@@ -381,7 +453,9 @@ export class HealthAggregator {
     };
 
     // --- OBJECTIF 2 : NUTRITION & MACROS 85 KG (18/6) ---
-    const carbsWithinLimit = todayNetCarbs <= targetCarbs;
+    const mealsLoggedCount = todayMeals.length;
+    const carbsWithinLimit = mealsLoggedCount > 0 && todayNetCarbs <= targetCarbs;
+    const isNutritionAccomplished = mealsLoggedCount > 0 && carbsWithinLimit;
     const carbsPercent = Math.min(100, Math.round((todayNetCarbs / targetCarbs) * 100));
     const proteinPercent = Math.min(100, Math.round((todayProtein / targetProtein) * 100));
     const fatPercent = Math.min(100, Math.round((todayFat / targetFat) * 100));
@@ -393,9 +467,11 @@ export class HealthAggregator {
       target: `150g protéines • Max 150g glucides nets • 80g lipides (~1950 kcal)`,
       current: `${Math.round(todayCalories)} kcal • ${Math.round(todayProtein)}g P • ${Math.round(todayNetCarbs)}g G • ${Math.round(todayFat)}g L`,
       percent: carbsPercent,
-      isAccomplished: carbsWithinLimit,
-      statusLabel: carbsWithinLimit ? `Conforme (${carbsPercent}% glucides) ✓` : `Dépassement (+${Math.round(todayNetCarbs - targetCarbs)}g)`,
-      tagClass: carbsWithinLimit ? 'badge-success' : 'badge-danger',
+      isAccomplished: isNutritionAccomplished,
+      statusLabel: isNutritionAccomplished
+        ? `Conforme (${carbsPercent}% glucides) ✓`
+        : (mealsLoggedCount === 0 ? 'En attente repas (0/2)' : `Dépassement (+${Math.round(todayNetCarbs - targetCarbs)}g)`),
+      tagClass: isNutritionAccomplished ? 'badge-success' : 'badge-warning',
       icon: '🥗',
       details: todayMeals.length > 0
         ? `${todayMeals.length} repas journalisé(s). Répartition 18/6 : Repas 1 (10h00 [40%]) & Repas 2 (15h00 [60%]).`

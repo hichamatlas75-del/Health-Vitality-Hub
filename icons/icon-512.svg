@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="50%" stop-color="#06B6D4" />
+      <stop offset="100%" stop-color="#6366F1" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#grad)" />
+  <!-- Heart and Sparkle Vitality Icon -->
+  <path d="M256 130 C190 130 145 175 145 235 C145 320 256 385 256 385 C256 385 367 320 367 235 C367 175 322 130 256 130 Z" fill="#ffffff" />
+  <circle cx="256" cy="245" r="42" fill="#10B981" />
+  <!-- Energy Pulse line -->
+  <path d="M190 255 L230 255 L245 220 L265 280 L280 255 L322 255" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
